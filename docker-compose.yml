@@ -1,0 +1,35 @@
+version: '3.9'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./backend:/app
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/codemate
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/vertexai.json
+    depends_on:
+      - mongo
+    command: npm run start:dev
+
+  socket-server:
+    build: ./socket-server
+    ports:
+      - "6000:6000"
+    volumes:
+      - ./socket-server:/app
+    depends_on:
+      - backend
+    command: node index.js
+
+  mongo:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
