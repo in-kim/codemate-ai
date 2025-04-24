@@ -1,4 +1,6 @@
 FROM node:18
+# Docker CLI 설치
+RUN apt-get update && apt-get install -y docker.io
 
 WORKDIR /app
 
@@ -8,4 +10,7 @@ RUN pnpm install
 
 COPY . .
 
-CMD ["pnpm", "start"] 
+# 4000번 포트 노출
+EXPOSE 4000
+
+CMD ["pnpm", "start"]  
