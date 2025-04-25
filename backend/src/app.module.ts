@@ -3,9 +3,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 import { ExecutionModule } from './modules/execution/execution.module';
+import { ReviewModule } from './modules/review/review.module';
 
 @Module({
-  imports: [ExecutionModule],
+  imports: [ExecutionModule, ReviewModule],
   controllers: [AppController],
   providers: [AppService],
 })
