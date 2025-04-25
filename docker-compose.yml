@@ -13,6 +13,8 @@ services:
       - MONGO_URI=mongodb://mongo:27017/codemate
       - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials/vertexai.json
       - DOCKER_HOST=unix:///var/run/docker.sock
+      - VERTEX_PROJECT_ID=focused-world-446007-v1
+      - VERTEX_LOCATION=us-central1
     depends_on:
       - mongo
 
