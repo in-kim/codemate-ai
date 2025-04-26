@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Socket.IO Test</title>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script>
+        const socket = io('http://localhost:6000');
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+            document.getElementById('status').textContent = 'Connected!';
+            
+            // Test JOIN
+            socket.emit('JOIN', {
+                documentId: 'test-doc',
+                userId: 'test-user'
+            });
+        });
+
+        socket.on('message', (message) => {
+            console.log('Received message:', message);
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML += `<p>${JSON.stringify(message)}</p>`;
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+            document.getElementById('status').textContent = 'Disconnected';
+        });
+
+        function sendSync() {
+            socket.emit('SYNC', {
+                documentId: 'test-doc',
+                userId: 'test-user',
+                payload: document.getElementById('message').value
+            });
+        }
+
+        function leaveRoom() {
+            socket.emit('LEAVE', {
+                documentId: 'test-doc',
+                userId: 'test-user'
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Socket.IO Test</h1>
+    <div>Status: <span id="status">Connecting...</span></div>
+    <div>
+        <input type="text" id="message" placeholder="Enter message">
+        <button onclick="sendSync()">Send Sync</button>
+        <button onclick="leaveRoom()">Leave Room</button>
+    </div>
+    <div id="messages"></div>
+</body>
+</html> 
