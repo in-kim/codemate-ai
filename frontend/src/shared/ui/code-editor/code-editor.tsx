@@ -8,16 +8,20 @@ export interface CodeEditorProps {
   value: string;
   language?: string;
   onChange: (value: string) => void;
+  onMount: (editor: monaco.editor.IStandaloneCodeEditor) => void;
   onCursorPositionChange?: (line: number, column: number) => void;
   height?: string;
+  children?: React.ReactNode;
 }
 
 export function CodeEditor({
   value,
   language = 'javascript',
   onChange,
+  onMount,
   onCursorPositionChange,
   height = '100%',
+  children,
 }: CodeEditorProps) {
   const handleEditorChange = (newValue: string | undefined) => {
     if (newValue !== undefined) {
@@ -29,6 +33,8 @@ export function CodeEditor({
     editor.onDidChangeCursorPosition((e) => {
       onCursorPositionChange?.(e.position.lineNumber, e.position.column);
     });
+
+    onMount?.(editor);
   };
 
   return (
@@ -52,9 +58,10 @@ export function CodeEditor({
           },
           lineNumbers: 'on',
           roundedSelection: false,
-          cursorSmoothCaretAnimation: true,
+          cursorSmoothCaretAnimation: 'on',
         }}
       />
+      {children}
     </div>
   );
 }
