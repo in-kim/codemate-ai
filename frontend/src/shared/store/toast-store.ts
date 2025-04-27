@@ -13,6 +13,7 @@ interface ToastState {
   toasts: ToastItem[];
   addToast: (message: string, type?: ToastType) => void;
   removeToast: (id: string) => void;
+  isHydrated?: boolean;
 }
 
 export const useToastStore = create<ToastState>()(
@@ -44,6 +45,13 @@ export const useToastStore = create<ToastState>()(
     { 
       name: 'ToastStore',
       storage: createJSONStorage(() => localStorage),
+      version: 1,
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.isHydrated = true;
+        }
+      },
+      migrate: (persistedState) => persistedState,
     }
   )
 )

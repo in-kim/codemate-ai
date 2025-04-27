@@ -6,12 +6,9 @@ export interface LayoutProps {
   collaborators: ReactNode;
   editor: ReactNode;
   review: ReactNode;
-  line: number;
-  column: number;
-  language: string;
 }
 
-export function Layout({ collaborators, editor, review, line, column, language }: LayoutProps) {
+export function Layout({ collaborators, editor, review }: LayoutProps) {
   return (
     <div className="flex flex-col flex-1 bg-[#1e1e1e] text-gray-200">
       {/* 상단 Header */}
@@ -36,7 +33,7 @@ export function Layout({ collaborators, editor, review, line, column, language }
       </div>
 
       {/* 푸터 영역 */}
-      <FooterBar line={line} column={column} language={language} />
+      <FooterBar />
     </div>
   );
 }

@@ -6,6 +6,7 @@ interface ModalState {
   isInviteModalOpen: boolean;
   openInviteModal: () => void;
   closeInviteModal: () => void;
+  isHydrated?: boolean;
 }
 
 export const useModalStore = create<ModalState>()(
@@ -22,6 +23,13 @@ export const useModalStore = create<ModalState>()(
     { 
       name: 'ModalStore',
       storage: createJSONStorage(() => localStorage),
+      version: 1,
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.isHydrated = true;
+        }
+      },
+      migrate: (persistedState) => persistedState,
     }
   )
 );
