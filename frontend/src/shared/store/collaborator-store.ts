@@ -11,6 +11,7 @@ interface Collaborator {
 interface CollaboratorState {
   collaborators: Collaborator[];
   addCollaborator: (name: string) => void;
+  isHydrated?: boolean;
 }
 
 export const useCollaboratorStore = create<CollaboratorState>()(
@@ -35,6 +36,13 @@ export const useCollaboratorStore = create<CollaboratorState>()(
     { 
       name: 'CollaboratorStore',
       storage: createJSONStorage(() => localStorage),
+      version: 1,
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.isHydrated = true;
+        }
+      },
+      migrate: (persistedState) => persistedState,
     }
   )
 );
