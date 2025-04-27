@@ -3,8 +3,8 @@ import { CodeEditor } from "@/shared/ui/code-editor";
 import { useShallow } from "zustand/react/shallow";
 
 export function CodeEditorWrapper() {
-  const { code, setCode, setCursorPosition, language } = useEditorStore(
-    useShallow((state) => ({ code: state.code, setCode: state.setCode, setCursorPosition: state.setCursorPosition, language: state.language }))
+  const { code, setCode, setCursorPosition, language, detectAndSetLanguage } = useEditorStore(
+    useShallow((state) => ({ code: state.code, setCode: state.setCode, setCursorPosition: state.setCursorPosition, language: state.language, detectAndSetLanguage: state.detectAndSetLanguage }))
   );
   
   const handleCursorPositionChange = (line: number, column: number) => {
@@ -13,6 +13,7 @@ export function CodeEditorWrapper() {
 
   const handleCodeChange = (value: string) => {
     setCode(value);
+    detectAndSetLanguage(value);
   }
 
   return (
