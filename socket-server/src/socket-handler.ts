@@ -22,6 +22,16 @@ export function handleSocketConnection(socket: Socket) {
     }, socket);
   });
 
+  socket.on('SYNC_CURSOR', (data) => {
+    if (!roomId) return;
+    roomManager.broadcast(roomId, {
+      type: 'CURSOR',
+      userId: data.userId,
+      line: data.line,
+      column: data.column
+    }, socket);
+  })
+
   socket.on('LEAVE', (data) => {
     console.log(`LEAVE : ${data.documentId}`);
     if (!roomId || !data.documentId) return;
