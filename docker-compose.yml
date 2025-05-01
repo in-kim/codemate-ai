@@ -17,11 +17,20 @@ services:
       - VERTEX_LOCATION=us-central1
     depends_on:
       - mongo
+  
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - backend
 
   socket-server:
     build: ./socket-server
     ports:
-      - "6000:6000"
+      - "4001:4001"
     volumes:
       - ./socket-server:/app
     depends_on:
