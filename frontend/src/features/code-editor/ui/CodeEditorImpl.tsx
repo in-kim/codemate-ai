@@ -1,13 +1,11 @@
 'use client';
-
 import { useEditorStore } from "@/shared/store/editor-store";
 import { CodeEditor } from "@/shared/ui/code-editor";
 import { useShallow } from "zustand/react/shallow";
 import { debounce } from "@/shared/lib/debounce";
 import * as monaco from 'monaco-editor';
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { fetcher } from "@/shared/lib/fetcher";
-import { useSocket } from "@/shared/hooks/useSocket";
 
 // 리뷰 API 응답 타입 정의
 interface ReviewResponsePart {
@@ -26,42 +24,18 @@ interface ReviewResponse {
   data: ReviewResponseItem[];
 }
 
-
 export function CodeEditorWrapper() {
   const { code, setCode, setCursorPosition, language, detectAndSetLanguage } = useEditorStore(
     useShallow((state) => ({ code: state.code, setCode: state.setCode, setCursorPosition: state.setCursorPosition, language: state.language, detectAndSetLanguage: state.detectAndSetLanguage }))
   );
-  
-  /**
-   * 커서 위치 변경 시 실행
-   * @param line 줄
-   * @param column 열
-   */
-  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+
+  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor>(null);
   const [selectedText, setSelectedText] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
   const [decorations, setDecorations] = useState<string[]>([]);
-  // TODO: github 정보 연결
-  const { sendSync } = useSocket({
-    documentId: 'test-doc',
-    userId: 'test-user',
-    onMessage: (data: unknown) => {
-      const msg = data as { type: string, payload: string };
-      if (msg.type === 'UPDATE' && typeof msg.payload === 'string') {
-        const editor = editorRef.current;
-        if (!editor) return;
-        const model = editor.getModel();
-        if (!model) return;
-
-        // 수신된 코드 내용으로 전체 덮어쓰기
-        model.setValue(msg.payload);
-      }
-
-    }
-  });
-
-   /**
+  
+  /**
    * 커서 위치 변경 시 실행
    * @param line 줄
    * @param column 열
@@ -107,7 +81,6 @@ export function CodeEditorWrapper() {
   const handleCodeChange = (value: string) => {
     setCode(value);
     debouncedDetectAndSetLanguage(value);
-    sendSync(value);
   };
 
   /**
@@ -151,8 +124,6 @@ export function CodeEditorWrapper() {
                 setDecorations(newDecorationIds);
               }
             }
-
-            setSelectedText('');
           } catch (error) {
             console.error('리뷰 결과 파싱 오류:', error);
           }
@@ -161,28 +132,9 @@ export function CodeEditorWrapper() {
     } catch (error) {
       console.error('리뷰 요청 실패:', error);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // ✅ 요청 끝나면 무조건 로딩 false
     }
   };
-
-  useEffect(() => {
-    if (!editorRef.current) return;
-  
-    const disposable = editorRef.current.onDidChangeModelContent((event) => {
-      const modifiedLines = new Set<number>();
-  
-      event.changes.forEach((change) => {
-        modifiedLines.add(change.range.startLineNumber);
-        modifiedLines.add(change.range.endLineNumber);
-      });
-  
-    });
-  
-    return () => {
-      disposable.dispose();
-    };
-  }, []);
-  
 
   return (
     <div className="relative w-full h-full">
