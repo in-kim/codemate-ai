@@ -7,7 +7,7 @@ export interface UserDocument extends Document {
   avatarUrl?: string;
 }
 
-const UserSchema = new mongoose.Schema(
+export const UserSchema = new mongoose.Schema(
   {
     githubId: { type: String, required: true, unique: true },
     username: { type: String, required: true },

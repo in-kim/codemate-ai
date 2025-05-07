@@ -1,7 +1,13 @@
 import axios from 'axios';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { User } from 'src/models/user.model';
+import {
+  Injectable,
+  InternalServerErrorException,
+  OnModuleInit,
+} from '@nestjs/common';
+import { UserDocument } from 'src/models/user.model';
 import { JwtService } from '@nestjs/jwt';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model } from 'mongoose';
 
 interface GitHubTokenResponse {
   access_token: string;
@@ -16,8 +22,19 @@ interface GitHubUser {
 }
 
 @Injectable()
-export class AuthService {
-  constructor(private readonly jwtService: JwtService) {}
+export class AuthService implements OnModuleInit {
+  constructor(
+    @InjectModel('User') private userModel: Model<UserDocument>,
+    @InjectConnection() private readonly connection: Connection,
+    private readonly jwtService: JwtService,
+  ) {}
+  onModuleInit() {
+    // 모듈 초기화 시 MongoDB 연결 상태 확인
+    console.log(
+      '⚙️ AuthService 초기화 - MongoDB 연결 상태:',
+      this.connection.readyState,
+    );
+  }
 
   generateToken(payload: object): {
     accessToken: string;
@@ -56,8 +73,10 @@ export class AuthService {
 
       const { id, login, email, avatar_url } = userResponse.data;
 
+      console.log('userResponse : ', userResponse.data);
+
       // 3. DB에 유저 정보 upsert
-      const user = await User.findOneAndUpdate(
+      const user = await this.userModel.findOneAndUpdate(
         { githubId: id.toString() },
         {
           githubId: id.toString(),
@@ -69,7 +88,11 @@ export class AuthService {
       );
 
       // 4. JWT 토큰 발급
-      const payload = { sub: user._id.toString(), username: user.username };
+      const payload = {
+        sub: user._id.toString(),
+        username: user.username,
+        avatarUrl: avatar_url,
+      };
 
       const { JWT_SECRET, JWT_EXPIRES_IN, JWT_REFRESH_EXPIRES_IN } =
         process.env as {

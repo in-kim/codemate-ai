@@ -17,12 +17,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  validate(payload: { sub: string; username: string }) {
+  validate(payload: { sub: string; username: string; avatarUrl: string }) {
     // payload: { sub: userId, username: string } 형식
     // 이 리턴값은 Request.user로 들어감
     return {
       userId: payload.sub,
       username: payload.username,
+      avatarUrl: payload.avatarUrl,
     };
   }
 }
