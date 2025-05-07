@@ -20,12 +20,10 @@ export function Button({
     <button
       className={cn(
         'rounded-md px-4 py-2 text-sm font-medium transition-colors duration-200 focus:outline-none',
-        {
-          'bg-[#0e639c] hover:bg-[#1177bb] text-white': variant === 'primary',
-          'bg-[#3c3c3c] hover:bg-[#555] text-gray-200': variant === 'secondary',
-          'bg-red-600 hover:bg-red-700 text-white': variant === 'danger',
-          'bg-transparent text-gray-400 hover:bg-[#333]': variant === 'ghost',
-        },
+        variant === 'primary' && 'bg-[#0e639c] hover:bg-[#1177bb] text-white',
+        variant === 'secondary' && 'bg-[#3c3c3c] hover:bg-[#555] text-gray-200',
+        variant === 'danger' && 'bg-red-600 hover:bg-red-700 text-white',
+        variant === 'ghost' && 'bg-transparent text-gray-400 hover:bg-[#333]',
         (disabled || isLoading) && 'opacity-50 cursor-not-allowed',
         className,
       )}
