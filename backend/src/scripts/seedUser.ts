@@ -23,6 +23,7 @@ export async function seedUser() {
   ]);
 
   console.log('🙋‍♂️ 사용자 생성됨:', user);
+  await mongoose.disconnect();
 }
 
 seedUser();
