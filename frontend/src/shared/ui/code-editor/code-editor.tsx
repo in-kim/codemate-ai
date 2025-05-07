@@ -66,8 +66,7 @@ export function CodeEditor({
           cursorSmoothCaretAnimation: 'on',
         }}
       />
-        {children}
-      </ControlledEditor>
+      {children}
     </div>
   );
 }

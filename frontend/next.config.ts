@@ -41,6 +41,14 @@ const nextConfig: NextConfig = {
 
     return config;
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+      },
+    ],
+  },
   // Next.js 13 이상에서 monaco-editor를 사용하기 위한 설정
   serverExternalPackages: ['monaco-editor'],
 };

@@ -11,6 +11,7 @@ interface FetcherOptions extends RequestInit {
 export async function fetcher<TResponse>(url: string, options?: FetcherOptions): Promise<TResponse> {
   const response = await fetch(url, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...(options?.headers || {}),

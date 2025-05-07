@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
-import { Header } from '@/shared/ui/header';
 import { FooterBar } from '../footer-bar';
+import { AuthHeaderWrapper } from '@/features/auth/ui/AuthHeaderWrapper';
 
 export interface LayoutProps {
   collaborators: ReactNode;
@@ -12,7 +12,7 @@ export function Layout({ collaborators, editor, review }: LayoutProps) {
   return (
     <div className="flex flex-col flex-1 bg-[#1e1e1e] text-gray-200">
       {/* 상단 Header */}
-      <Header />
+      <AuthHeaderWrapper />
 
       {/* 본문 영역 */}
       <div className="flex flex-1 overflow-hidden">
