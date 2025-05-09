@@ -68,7 +68,6 @@ export class AuthController {
     @Req()
     req: Request & UserDocument,
   ) {
-    console.log('🔥🔥', req);
     const user = req.user;
 
     if (!user) {
