@@ -1,4 +1,3 @@
-// src/modules/execution/execution.service.ts
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -8,6 +7,8 @@ import { randomUUID } from 'crypto';
 import { LoggerService } from 'src/shared/logger/logger.service';
 import { AppHttpException } from 'src/shared/exceptions/http.exception';
 import { ErrorCodes } from 'src/shared/exceptions/error-codes';
+import { ProgrammingLanguage } from 'src/shared/enums/language.enum';
+
 const asyncExec = promisify(exec);
 
 @Injectable()
@@ -18,7 +19,12 @@ export class ExecutionService {
     this.logger.log(`실행 요청 - 언어: ${language}`, 'ExecutionService');
 
     try {
-      if (!['python', 'javascript'].includes(language)) {
+      // 지원하는 언어인지 확인
+      if (
+        !Object.values(ProgrammingLanguage).includes(
+          language as ProgrammingLanguage,
+        )
+      ) {
         throw new AppHttpException(
           ErrorCodes.UNSUPPORTED_LANGUAGE,
           HttpStatus.BAD_REQUEST,
@@ -26,18 +32,24 @@ export class ExecutionService {
       }
 
       const id = randomUUID();
-      const fileName = language === 'python' ? `${id}.py` : `${id}.js`;
+      const programmingLanguage = language as ProgrammingLanguage;
+      const fileName =
+        programmingLanguage === ProgrammingLanguage.PYTHON
+          ? `${id}.py`
+          : `${id}.js`;
       const filePath = path.join('/tmp', fileName);
 
+      // 코드를 파일에 저장
       await fs.writeFile(filePath, code);
+      this.logger.log(`파일 저장 완료: ${filePath}`, 'ExecutionService');
 
       // 언어별 Docker 이미지 및 실행 명령 정의
       let image = '';
       let execCmd = '';
-      if (language === 'python') {
-        image = 'python:3.11';
+      if (programmingLanguage === ProgrammingLanguage.PYTHON) {
+        image = 'python:3.12-slim-bookworm';
         execCmd = `python /app/${fileName}`; // 컨테이너 내에서 실행할 명령
-      } else if (language === 'javascript') {
+      } else if (programmingLanguage === ProgrammingLanguage.JAVASCRIPT) {
         image = 'node:18';
         execCmd = `node /app/${fileName}`;
       }
@@ -46,21 +58,26 @@ export class ExecutionService {
       const dockerCommand = [
         'docker run --rm', // 실행 후 컨테이너 삭제
         '--network none', // 외부 접속 차단 (보안 강화)
-        '--memory 100m', // 메모리 제한
-        '--cpus 0.5', // CPU 제한
-        `-v /tmp:/app`, // 호스트 파일을 컨테이너로 마운트
+        '--memory 256m', // 메모리 제한
+        '--cpus 1', // CPU 제한
+        `-v ${path.dirname(filePath)}:/app`, // 호스트 파일을 컨테이너로 마운트
+        '-i', // 상호작용 모드 활성화
         image, // 사용할 이미지
-        execCmd, // 컨테이너 내 실행 명령
+        `sh -c "${execCmd} 2>&1"`, // 컨테이너 내 실행 명령, 표준 오류를 표준 출력으로 리다이렉트
       ].join(' ');
+
+      this.logger.log(`도커 실행 명령: ${dockerCommand}`, 'ExecutionService');
 
       try {
         const { stdout, stderr } = await asyncExec(dockerCommand, {
           timeout: 5000,
         });
+
         this.logger.log(
-          `도커 실행 - 컨테이너 ID: ${stdout}`,
+          `도커 실행 결과 - stdout: ${stdout}, stderr: ${stderr}`,
           'ExecutionService',
         );
+
         return { stdout, stderr, exitCode: 0 };
       } catch (err: any) {
         this.logger.error(
@@ -69,12 +86,25 @@ export class ExecutionService {
           'ExecutionService',
         );
         return {
-          stdout: err.stdout,
+          stdout: err.stdout || '',
           stderr: err.stderr || err.message,
           exitCode: err.code || 1,
         };
       } finally {
-        await fs.unlink(filePath).catch(() => {});
+        // 임시 파일 삭제
+        try {
+          await fs.unlink(filePath);
+          this.logger.log(
+            `임시 파일 삭제 완료: ${filePath}`,
+            'ExecutionService',
+          );
+        } catch (error) {
+          this.logger.error(
+            `임시 파일 삭제 실패: ${error.message}`,
+            error.stack,
+            'ExecutionService',
+          );
+        }
       }
     } catch (error) {
       this.logger.error(
