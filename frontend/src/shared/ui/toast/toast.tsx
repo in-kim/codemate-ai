@@ -23,10 +23,10 @@ export function Toast({ message, type = 'default',  onClose, duration = 3000 }: 
   }, [onClose, duration]);
 
   const typeClass = {
-    success: 'border-green-600 bg-white',
-    error: 'border-red-600 bg-red-600',
-    warning: 'border-yellow-500 bg-yellow-500 text-black',
-    default: 'border-[#252526] bg-white',
+    success: 'border-green-600 bg-[#252526] text-white',
+    error: 'border-red-600 bg-[#252526] text-white',
+    warning: 'border-yellow-500 bg-[#252526] text-white',
+    default: 'border-[#252526] bg-[#252526] text-white',
   };
 
   const typeIcon = {
@@ -38,7 +38,7 @@ export function Toast({ message, type = 'default',  onClose, duration = 3000 }: 
 
   return (
     <div className={cn(
-      'flex items-center space-x-2 text-sm px-4 py-2 rounded shadow-lg animate-fade-in border-2',
+      'flex items-center space-x-2 text-sm px-4 py-2 rounded shadow-lg animate-fade-in border-1',
       typeClass[type],
     )}>
       {/* 아이콘 표시 */}

@@ -1,3 +1,6 @@
+import { useAuthStore } from "@/shared/store/auth-store";
+import { useToastStore } from "@/shared/store/toast-store";
+
 interface FetcherOptions extends RequestInit {
   skipAuth?: boolean; // (추후 인증 확장용, 지금은 사용 X)
 }
@@ -26,6 +29,15 @@ export async function fetcher<TResponse>(url: string, options?: FetcherOptions):
 
     if (contentType?.includes('application/json')) {
       errorBody = await response.json();
+    }
+
+    if (response.status === 401) {
+      console.log('401');
+      if (typeof window !== 'undefined') {
+        useToastStore.getState().addToast('로그인이 필요합니다.', 'error');
+        useAuthStore.getState().clearUser();
+      }
+      console.error('Unauthorized');
     }
 
     const errorMessage = errorBody?.message || response.statusText || 'API Error';

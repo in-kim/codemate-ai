@@ -20,19 +20,22 @@ export default function CodeEditorPage() {
 
   return (
     <div className="flex flex-col h-screen">
-      <Layout
-        collaborators={
-          <CollaborationWrapper />
-        }
-        editor={
-          <CodeEditorWrapper />
-        }
-        review={
-          <ReviewForm onSubmit={handleReviewSubmit} />
-        }
-      />
-      <InviteFormModal />
-      <ToastsWrapper />
+      {/* 상단 70%: 기존 레이아웃 */}
+      <div className="h-[70%]">
+        <Layout
+          collaborators={
+            <CollaborationWrapper />
+          }
+          editor={
+            <CodeEditorWrapper />
+          }
+          review={
+            <ReviewForm onSubmit={handleReviewSubmit} />
+          }
+        />
+        <InviteFormModal />
+        <ToastsWrapper />
+      </div>
     </div>
   );
 }

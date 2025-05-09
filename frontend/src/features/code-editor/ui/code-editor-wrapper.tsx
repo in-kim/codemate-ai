@@ -8,6 +8,7 @@ import * as monaco from 'monaco-editor';
 import { useEffect, useRef, useState } from "react";
 import { fetcher } from "@/shared/lib/fetcher";
 import { useSocket } from "@/shared/hooks/useSocket";
+import {useAuthStore} from "@/shared/store/auth-store";
 
 // 리뷰 API 응답 타입 정의
 interface ReviewResponsePart {
@@ -31,7 +32,7 @@ export function CodeEditorWrapper() {
   const { code, setCode, setCursorPosition, language, detectAndSetLanguage } = useEditorStore(
     useShallow((state) => ({ code: state.code, setCode: state.setCode, setCursorPosition: state.setCursorPosition, language: state.language, detectAndSetLanguage: state.detectAndSetLanguage }))
   );
-  
+  const user = useAuthStore();
   /**
    * 커서 위치 변경 시 실행
    * @param line 줄
@@ -39,13 +40,12 @@ export function CodeEditorWrapper() {
    */
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const [selectedText, setSelectedText] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isReviewLoading, setIsReviewLoading] = useState(false);
 
   const [decorations, setDecorations] = useState<string[]>([]);
-  // TODO: github 정보 연결
   const { sendSync } = useSocket({
-    documentId: 'test-doc',
-    userId: 'test-user',
+    documentId: user.userInfo?.id || '',
+    userId: user.userInfo?.username || '',
     onMessage: (data: unknown) => {
       const msg = data as { type: string, payload: string };
       if (msg.type === 'UPDATE' && typeof msg.payload === 'string') {
@@ -57,7 +57,6 @@ export function CodeEditorWrapper() {
         // 수신된 코드 내용으로 전체 덮어쓰기
         model.setValue(msg.payload);
       }
-
     }
   });
 
@@ -117,7 +116,7 @@ export function CodeEditorWrapper() {
     if (!selectedText) return;
 
     try {
-      setIsLoading(true);
+      setIsReviewLoading(true);
       const response = await fetcher<ReviewResponse>('/api/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -161,7 +160,7 @@ export function CodeEditorWrapper() {
     } catch (error) {
       console.error('리뷰 요청 실패:', error);
     } finally {
-      setIsLoading(false);
+      setIsReviewLoading(false);
     }
   };
 
@@ -194,20 +193,20 @@ export function CodeEditorWrapper() {
         language={language}
         height="calc(100vh - 80px)" // Header 높이 제외
       >
-        {selectedText && (
-          <div className="absolute top-4 right-4 z-10">
+        <div className="absolute top-4 right-4 z-10 flex gap-2">
+          {selectedText && (
             <button
               onClick={handleRequestReview}
               className="px-4 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600 transition"
             >
-              {isLoading ? (
+              {isReviewLoading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-white"></div>
               ) : (
                 '선택한 코드 리뷰 요청'
               )}
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </CodeEditor>
     </div>
   );

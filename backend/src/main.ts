@@ -4,10 +4,20 @@ import { JwtAuthGuard } from './modules/auth/jwt-auth.guard';
 import { Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import mongoose from 'mongoose';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+  });
+
+  // 쿠키 파서 미들웨어 활성화
+  app.use(cookieParser());
+
+  // CORS 설정
+  app.enableCors({
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
   });
 
   // Swagger 설정
