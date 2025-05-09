@@ -1,24 +1,31 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuthStore } from '@/shared/store/auth-store';
-import { checkAuth } from '@/shared/lib/utils/check-auth';
 import { Header } from '@/shared/ui/header';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEditorStore } from '@/shared/store/editor-store';
+import { fetcher } from '@/shared/lib/fetcher';
 
 export const AuthHeaderWrapper = () => {
   const [isMounted, setIsMounted] = useState(false);
   const user = useAuthStore().getUser();
+  const { code, language } = useEditorStore();
 
-  useEffect(() => {
-    async function fetchAuth() {
-      await checkAuth();
+  const runCode = useCallback(async () => {
+    try{
+      const res = await fetcher('/api/execute', {
+        method: 'POST',
+        body: JSON.stringify({
+          code: code,
+          language: language,
+        }),
+      });
+      console.log(res);
+    } catch(err) {
+      console.error(err);
     }
-    if (!user) {
-      fetchAuth();
-    }
-  }, [user]);
-
+  }, [code, language]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -38,8 +45,8 @@ export const AuthHeaderWrapper = () => {
             )
           }
         </div>
-        
       }
+      onRunClick={runCode}
     />
   );
 };

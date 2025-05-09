@@ -1,3 +1,5 @@
+import { useAuthStore } from "@/shared/store/auth-store";
+
 interface FetcherOptions extends RequestInit {
   skipAuth?: boolean; // (추후 인증 확장용, 지금은 사용 X)
 }
@@ -26,6 +28,14 @@ export async function fetcher<TResponse>(url: string, options?: FetcherOptions):
 
     if (contentType?.includes('application/json')) {
       errorBody = await response.json();
+    }
+
+    if (response.status === 401) {
+      console.log('401');
+      if (typeof window !== 'undefined') {
+        useAuthStore.getState().clearUser();
+      }
+      throw new Error('Unauthorized');
     }
 
     const errorMessage = errorBody?.message || response.statusText || 'API Error';

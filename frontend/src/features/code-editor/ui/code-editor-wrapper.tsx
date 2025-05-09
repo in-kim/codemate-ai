@@ -8,6 +8,7 @@ import * as monaco from 'monaco-editor';
 import { useEffect, useRef, useState } from "react";
 import { fetcher } from "@/shared/lib/fetcher";
 import { useSocket } from "@/shared/hooks/useSocket";
+import {useAuthStore} from "@/shared/store/auth-store";
 
 // 리뷰 API 응답 타입 정의
 interface ReviewResponsePart {
@@ -31,7 +32,7 @@ export function CodeEditorWrapper() {
   const { code, setCode, setCursorPosition, language, detectAndSetLanguage } = useEditorStore(
     useShallow((state) => ({ code: state.code, setCode: state.setCode, setCursorPosition: state.setCursorPosition, language: state.language, detectAndSetLanguage: state.detectAndSetLanguage }))
   );
-  
+  const user = useAuthStore();
   /**
    * 커서 위치 변경 시 실행
    * @param line 줄
@@ -42,10 +43,9 @@ export function CodeEditorWrapper() {
   const [isLoading, setIsLoading] = useState(false);
 
   const [decorations, setDecorations] = useState<string[]>([]);
-  // TODO: github 정보 연결
   const { sendSync } = useSocket({
-    documentId: 'test-doc',
-    userId: 'test-user',
+    documentId: user.userInfo?.id || '',
+    userId: user.userInfo?.username || '',
     onMessage: (data: unknown) => {
       const msg = data as { type: string, payload: string };
       if (msg.type === 'UPDATE' && typeof msg.payload === 'string') {
@@ -57,7 +57,6 @@ export function CodeEditorWrapper() {
         // 수신된 코드 내용으로 전체 덮어쓰기
         model.setValue(msg.payload);
       }
-
     }
   });
 

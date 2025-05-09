@@ -10,7 +10,7 @@ export interface LayoutProps {
 
 export function Layout({ collaborators, editor, review }: LayoutProps) {
   return (
-    <div className="flex flex-col flex-1 bg-[#1e1e1e] text-gray-200">
+    <div className="flex flex-col flex-1 bg-[#1e1e1e] text-gray-200 h-screen">
       {/* 상단 Header */}
       <AuthHeaderWrapper />
 
