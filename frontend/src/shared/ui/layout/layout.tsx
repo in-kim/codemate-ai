@@ -1,6 +1,8 @@
 import { ReactNode } from 'react';
 import { FooterBar } from '../footer-bar';
 import { AuthHeaderWrapper } from '@/features/auth/ui/AuthHeaderWrapper';
+import { Terminal } from '@/features/terminal';
+
 
 export interface LayoutProps {
   collaborators: ReactNode;
@@ -30,6 +32,11 @@ export function Layout({ collaborators, editor, review }: LayoutProps) {
         <aside className="w-1/5 border-l border-[#333] p-4 overflow-y-auto bg-[#252526]">
           {review}
         </aside>
+      </div>
+
+      {/* 하단 30%: 터미널 */}
+      <div className="h-[30%] border-t border-gray-700">
+        <Terminal />
       </div>
 
       {/* 푸터 영역 */}

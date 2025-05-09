@@ -40,7 +40,7 @@ export function CodeEditorWrapper() {
    */
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const [selectedText, setSelectedText] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isReviewLoading, setIsReviewLoading] = useState(false);
 
   const [decorations, setDecorations] = useState<string[]>([]);
   const { sendSync } = useSocket({
@@ -116,7 +116,7 @@ export function CodeEditorWrapper() {
     if (!selectedText) return;
 
     try {
-      setIsLoading(true);
+      setIsReviewLoading(true);
       const response = await fetcher<ReviewResponse>('/api/review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -160,7 +160,7 @@ export function CodeEditorWrapper() {
     } catch (error) {
       console.error('리뷰 요청 실패:', error);
     } finally {
-      setIsLoading(false);
+      setIsReviewLoading(false);
     }
   };
 
@@ -193,20 +193,20 @@ export function CodeEditorWrapper() {
         language={language}
         height="calc(100vh - 80px)" // Header 높이 제외
       >
-        {selectedText && (
-          <div className="absolute top-4 right-4 z-10">
+        <div className="absolute top-4 right-4 z-10 flex gap-2">
+          {selectedText && (
             <button
               onClick={handleRequestReview}
               className="px-4 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600 transition"
             >
-              {isLoading ? (
+              {isReviewLoading ? (
                 <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-white"></div>
               ) : (
                 '선택한 코드 리뷰 요청'
               )}
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </CodeEditor>
     </div>
   );

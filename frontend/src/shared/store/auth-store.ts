@@ -13,6 +13,7 @@ interface AuthState {
   isHydrated: boolean;
   setUser: (user: User) => void;
   getUser: () => User | null;
+  getIsLogin: () => boolean;
   clearUser: () => void;
   setHydrated: (hydrated: boolean) => void;
 }
@@ -29,6 +30,7 @@ export const useAuthStore = create<AuthState>()(
         ...initialState,
         setUser: (user: User) => set({ userInfo: user }),
         getUser: () => get().userInfo,
+        getIsLogin: () => get().userInfo !== null,
         clearUser: () => set({ userInfo: null }),
         setHydrated: (hydrated: boolean) => set({ isHydrated: hydrated }),
       })),

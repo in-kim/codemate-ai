@@ -1,5 +1,6 @@
 import { useAuthStore } from "@/shared/store/auth-store";
 import { checkAuth } from "./check-auth";
+import { User } from "@/shared/types/user";
 
 /**
  * 사용자 정보를 서버에서 가져와 스토어에 저장하는 함수
@@ -7,7 +8,7 @@ import { checkAuth } from "./check-auth";
  */
 export async function refreshUserInfo() {
   try {
-    const userData = await checkAuth();
+    const userData:User | null = await checkAuth();
     
     if (userData) {
       console.log('userData : ', userData);
