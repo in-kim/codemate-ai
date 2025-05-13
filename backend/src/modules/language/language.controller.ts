@@ -16,7 +16,8 @@ interface LanguageInfo {
 }
 
 @ApiTags('언어')
-@Controller('languages')
+@Public()
+@Controller('/api/languages')
 export class LanguageController {
   @Public()
   @Get()

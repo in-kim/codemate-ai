@@ -5,7 +5,7 @@ import { ResponseHelper } from 'src/shared/utils/response.helper';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('Review')
-@Controller('review')
+@Controller('/api/review')
 export class ReviewController {
   constructor(private readonly reviewService: ReviewService) {}
 

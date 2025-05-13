@@ -24,7 +24,7 @@ export class VertexAiService {
 
     try {
       const resp = await generativeModel.generateContent(prompt);
-      const contentResponse = await resp.response;
+      const contentResponse = resp.response;
       this.logger.log(
         `Vertex AI 실행 결과: ${JSON.stringify(contentResponse)}`,
         'VertexAiService',
