@@ -12,14 +12,7 @@ const CodeHistorySchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
-    snapshot: {
-      type: String,
-      required: true,
-    },
-    savedAt: {
-      type: Date,
-      default: Date.now,
-    },
+    roomId: { type: String, required: true }, // room.roomId
   },
   {
     timestamps: false,

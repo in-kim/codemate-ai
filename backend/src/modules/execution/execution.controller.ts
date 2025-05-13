@@ -4,7 +4,7 @@ import { ExecutionService } from './execution.service';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Execute')
-@Controller('execute')
+@Controller('/api/execute')
 export class ExecutionController {
   constructor(private readonly executionService: ExecutionService) {}
 

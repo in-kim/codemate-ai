@@ -4,8 +4,9 @@ import { JwtAuthGuard } from './modules/auth/jwt-auth.guard';
 import { Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import mongoose from 'mongoose';
+import { ResponseInterceptor } from './shared/interceptors/response.interceptor';
 import * as cookieParser from 'cookie-parser';
-
+import { HttpExceptionFilter } from './shared/exceptions/http-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
@@ -19,6 +20,10 @@ async function bootstrap() {
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true,
   });
+
+  // 글로벌 인터셉터 등록
+  app.useGlobalInterceptors(new ResponseInterceptor());
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   // Swagger 설정
   const config = new DocumentBuilder()
