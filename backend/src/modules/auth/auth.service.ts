@@ -8,6 +8,7 @@ import { UserDocument } from 'src/models/user.model';
 import { JwtService } from '@nestjs/jwt';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Connection, Model } from 'mongoose';
+import { ConfigService } from '@nestjs/config';
 
 interface GitHubTokenResponse {
   access_token: string;
@@ -27,6 +28,7 @@ export class AuthService implements OnModuleInit {
     @InjectModel('User') private userModel: Model<UserDocument>,
     @InjectConnection() private readonly connection: Connection,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
   onModuleInit() {
     // 모듈 초기화 시 MongoDB 연결 상태 확인
@@ -40,10 +42,19 @@ export class AuthService implements OnModuleInit {
     accessToken: string;
     refreshToken: string;
   } {
+    const config = this.configService.get<{
+      JWT_SECRET: string;
+      JWT_REFRESH_EXPIRES_IN: string;
+    }>('');
+
+    if (!config?.JWT_SECRET || !config.JWT_REFRESH_EXPIRES_IN) {
+      throw new Error('JWT 설정이 누락되었습니다. .env 파일을 확인하세요.');
+    }
+
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, {
-      secret: process.env.JWT_SECRET,
-      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+      secret: config.JWT_SECRET,
+      expiresIn: config.JWT_REFRESH_EXPIRES_IN,
     });
 
     return { accessToken, refreshToken };
@@ -54,8 +65,8 @@ export class AuthService implements OnModuleInit {
       const tokenResponse = await axios.post<GitHubTokenResponse>(
         'https://github.com/login/oauth/access_token',
         {
-          client_id: process.env.GITHUB_CLIENT_ID,
-          client_secret: process.env.GITHUB_CLIENT_SECRET,
+          client_id: this.configService.get<string>('GITHUB_CLIENT_ID'),
+          client_secret: this.configService.get<string>('GITHUB_CLIENT_SECRET'),
           code,
         },
         { headers: { Accept: 'application/json' } },
@@ -93,17 +104,6 @@ export class AuthService implements OnModuleInit {
         username: user.username,
         avatarUrl: avatar_url,
       };
-
-      const { JWT_SECRET, JWT_EXPIRES_IN, JWT_REFRESH_EXPIRES_IN } =
-        process.env as {
-          JWT_SECRET: string;
-          JWT_EXPIRES_IN: string;
-          JWT_REFRESH_EXPIRES_IN: string;
-        };
-
-      if (!JWT_SECRET || !JWT_EXPIRES_IN || !JWT_REFRESH_EXPIRES_IN) {
-        throw new Error('JWT 설정이 누락되었습니다. .env 파일을 확인하세요.');
-      }
 
       const { accessToken, refreshToken } = this.generateToken(payload);
 
