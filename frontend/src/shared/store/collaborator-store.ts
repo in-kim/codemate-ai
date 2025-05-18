@@ -19,10 +19,7 @@ export const useCollaboratorStore = create<CollaboratorState>()(
     devtools(
       immer(
         (set) => ({
-          collaborators: [
-            { id: '1', name: 'Alice', status: 'online' },
-            { id: '2', name: 'Bob', status: 'offline' },
-          ],
+          collaborators: [],
           addCollaborator: (name) =>
             set((state) => ({
               collaborators: [

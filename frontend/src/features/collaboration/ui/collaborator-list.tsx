@@ -1,4 +1,3 @@
-import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/utils';
 
 export interface Collaborator {
@@ -9,16 +8,11 @@ export interface Collaborator {
 
 export interface CollaboratorListProps {
   collaborators: Collaborator[];
-  onInviteClick?: () => void;
 }
 
-export function CollaboratorList({ collaborators, onInviteClick }: CollaboratorListProps) {
+export function CollaboratorList({ collaborators }: CollaboratorListProps) {
   return (
-    <div className="flex flex-col space-y-4">
-      <Button variant="primary" onClick={onInviteClick}>
-        + Invite
-      </Button>
-
+    <div className="flex flex-col space-y-4 py-2 px-3">
       <div className="flex flex-col space-y-2">
         {collaborators.length > 0 ? (
           collaborators.map((collaborator) => (
@@ -38,7 +32,7 @@ export function CollaboratorList({ collaborators, onInviteClick }: CollaboratorL
             </div>
           ))
         ) : (
-          <div className="text-sm text-gray-500">No collaborators yet.</div>
+          <div className="text-sm text-gray-500">협업자가 없습니다.</div>
         )}
       </div>
     </div>

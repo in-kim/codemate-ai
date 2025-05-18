@@ -5,12 +5,12 @@ import { Terminal } from '@/features/terminal';
 
 
 export interface LayoutProps {
-  collaborators: ReactNode;
-  editor: ReactNode;
-  review: ReactNode;
+  leftSection: ReactNode;
+  mainSection: ReactNode;
+  rightSection: ReactNode;
 }
 
-export function Layout({ collaborators, editor, review }: LayoutProps) {
+export function Layout({ leftSection, mainSection, rightSection }: LayoutProps) {
   return (
     <div className="flex flex-col flex-1 bg-[#1e1e1e] text-gray-200 h-screen">
       {/* 상단 Header */}
@@ -18,19 +18,19 @@ export function Layout({ collaborators, editor, review }: LayoutProps) {
 
       {/* 본문 영역 */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Collaborators */}
-        <aside className="w-1/5 border-r border-[#333] p-4 overflow-y-auto bg-[#252526]">
-          {collaborators}
+        {/* leftSection */}
+        <aside className="w-1/5 border-r border-[#333] overflow-y-auto bg-[#252526]">
+          {leftSection}
         </aside>
 
-        {/* Code Editor */}
+        {/* Code mainSection */}
         <main className="w-3/5 p-4 overflow-y-auto">
-          {editor}
+          {mainSection}
         </main>
 
         {/* Review */}
         <aside className="w-1/5 border-l border-[#333] p-4 overflow-y-auto bg-[#252526]">
-          {review}
+          {rightSection}
         </aside>
       </div>
 

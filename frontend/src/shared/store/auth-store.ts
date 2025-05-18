@@ -1,12 +1,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-
-interface User {
-  id: string;
-  username: string;
-  avatarUrl: string;
-}
+import { User } from '../types/user';
 
 interface AuthState {
   userInfo: User | null;

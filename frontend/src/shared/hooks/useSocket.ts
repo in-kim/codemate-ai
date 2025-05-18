@@ -45,7 +45,7 @@ export function useSocket({
       socket.emit('LEAVE', { documentId, userId });
       socket.disconnect();
     };
-  }, [documentId, userId]);
+  }, [documentId, onCursorUpdate, onMessage, userId]);
 
   const sendSync = (payload: unknown) => {
     socketRef.current?.emit('SYNC', { documentId, userId, payload });

@@ -18,9 +18,6 @@ export async function executeCode(code: string, language: string): Promise<Execu
     // 백엔드 API 호출
     const response = await fetcher<ExecutionResponse>('/api/execute', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ code, language }),
     });
 

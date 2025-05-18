@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@monaco-editor/react": "^4.7.0",
     "date-fns": "^4.1.0",
     "immer": "^10.1.1",

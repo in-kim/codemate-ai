@@ -6,6 +6,9 @@ interface ModalState {
   isInviteModalOpen: boolean;
   openInviteModal: () => void;
   closeInviteModal: () => void;
+  isCreateWorkspaceModalOpen: boolean;
+  openCreateWorkspaceModal: () => void;
+  closeCreateWorkspaceModal: () => void;
   isHydrated?: boolean;
 }
 
@@ -17,6 +20,9 @@ export const useModalStore = create<ModalState>()(
           isInviteModalOpen: false,
           openInviteModal: () => set({ isInviteModalOpen: true }),
           closeInviteModal: () => set({ isInviteModalOpen: false }),
+          isCreateWorkspaceModalOpen: false,
+          openCreateWorkspaceModal: () => set({ isCreateWorkspaceModalOpen: true }),
+          closeCreateWorkspaceModal: () => set({ isCreateWorkspaceModalOpen: false }),
         }),
       )
     ),

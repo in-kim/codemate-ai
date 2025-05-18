@@ -1,4 +1,5 @@
 import { fetcher } from '../lib/fetcher';
+import { HttpResponse } from '../types/response';
 
 export interface Language {
   id: string;
@@ -13,7 +14,8 @@ export interface Language {
  */
 export async function getLanguages(): Promise<Language[]> {
   try {
-    return await fetcher<Language[]>('/api/languages');
+    const res = await fetcher<HttpResponse<Language[]>>('/api/languages');
+    return res.data;
   } catch (error) {
     console.error('언어 목록 조회 실패:', error);
     return [];
