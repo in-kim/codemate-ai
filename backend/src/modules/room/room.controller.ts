@@ -17,11 +17,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Public } from 'src/shared/decorators/public.decorator';
-import { get } from 'http';
 
 @Public()
-@ApiTags('Rooms')
-@Controller('/api/rooms')
+@ApiTags('Workspace')
+@Controller('/api/workspace')
 export class RoomController {
   constructor(private readonly roomService: RoomService) {}
 
@@ -45,7 +44,6 @@ export class RoomController {
       roomName: body.roomName,
     });
   }
-
   @Post('/:roomId/join')
   @ApiOperation({ summary: '페어 코딩 방 참여' })
   @ApiParam({ name: 'roomId', type: 'string', description: '방 ID' })
@@ -122,7 +120,7 @@ export class RoomController {
     return await this.roomService.leaveRoom(roomId, userId);
   }
 
-  @Get('/:userId/my')
+  @Get('/my/:userId')
   @ApiOperation({ summary: '내가 속한 방 목록 가져오기' })
   @ApiParam({ name: 'userId', type: 'string', description: '사용자 ID' })
   @ApiResponse({

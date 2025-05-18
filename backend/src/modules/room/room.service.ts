@@ -87,7 +87,6 @@ export class RoomService {
     }
   }
 
-  /*************  ✨ Windsurf Command 🌟  *************/
   /**
    * 방에서 사용자를 퇴장합니다.
    * @param roomId 방 ID
