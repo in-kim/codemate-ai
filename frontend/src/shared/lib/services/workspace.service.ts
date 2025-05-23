@@ -3,30 +3,31 @@ import { fetcher } from '../fetcher'
 import { useAuthStore } from '@/shared/store/auth-store';
 
 export interface CreateWorkspaceResponse {
-  roomId: string;
-  roomName: string;
+  workSpaceId: string;
+  workSpaceName: string;
   createdAt: Date;
 }
 
 export interface JoinWorkspaceResponse {
-  roomId: string;
+  workSpaceId: string;
   participants: string[];
 }
 
 export interface getJoinMyWorkspaceResponse {
-  roomId: string;
-  roomName: string | undefined;
-  createAt: Date;
+  workSpaceId: string;
+  workSpaceName: string | undefined;
+  createdAt: Date;
   participants: string[];
+  owner: string;
 }
 
 export interface LeaveWorkspaceResponse {
-  roomId: string;
+  workSpaceId: string;
   participants: string[];
 }
 
 export interface DeleteWorkspaceResponse {
-  roomId: string;
+  workSpaceId: string;
 }
 
 export interface InviteLinkResponse {
@@ -34,7 +35,7 @@ export interface InviteLinkResponse {
 }
 
 export interface InviteTokenResponse {
-  roomId: string;
+  workSpaceId: string;
   invitedBy: string;
 }
 
@@ -43,29 +44,24 @@ export interface InviteTokenResponse {
  * @param workSpaceName 워크스페이스 이름
  * @returns 생성된 워크스페이스 정보
 */
-export async function createdWorkspace(workSpaceName: string): Promise<HttpResponse<CreateWorkspaceResponse> | unknown> {
-    try {
-      const payload = {
-        workSpaceName,
-        userId: useAuthStore.getState().userInfo,
-      }
-      const response = await fetcher('/api/workspace', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-
-      return response as HttpResponse<CreateWorkspaceResponse>;
-    } catch (err) {
-      console.error('워크스페이스 생성 실패:', err);
-      return err;
+export async function createdWorkspace(workSpaceName: string, userId: string): Promise<HttpResponse<CreateWorkspaceResponse> | unknown> {
+    const payload = {
+      workSpaceName,
+      userId,
     }
+    const response = await fetcher('/api/workspace', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+
+    return response as HttpResponse<CreateWorkspaceResponse>;
 }
 
 /**
  * 사용자가 참여한 워크스페이스 목록을 가져옵니다.
  * @returns 사용자가 참여한 워크스페이스 목록
 */
-export async function getJoinMyWorkspace(userId: string): Promise<HttpResponse<getJoinMyWorkspaceResponse[]> | unknown> {
+export async function getJoinMyWorkspace(userId: string): Promise<HttpResponse<getJoinMyWorkspaceResponse[]> | null> {
     try {
       const response = await fetcher(`/api/workspace/my/${userId}`, {
         method: 'GET',
@@ -73,8 +69,8 @@ export async function getJoinMyWorkspace(userId: string): Promise<HttpResponse<g
 
       return response as HttpResponse<getJoinMyWorkspaceResponse[]>;
     } catch (err) {
-      console.error('워크스페이스 참여 실패:', err);
-      return err;
+      console.error('워크스페이스 조회 실패:', err);
+      return null;
     }
 }
 
@@ -110,7 +106,7 @@ export async function leaveWorkspace(workSpaceId: string): Promise<HttpResponse<
     const payload = {
       userId: useAuthStore.getState().userInfo,
     }
-    const response = await fetcher(`/${workSpaceId}/leave`, {
+    const response = await fetcher(`/api/workspace/${workSpaceId}/leave`, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -129,8 +125,11 @@ export async function leaveWorkspace(workSpaceId: string): Promise<HttpResponse<
 */
 export async function deleteWorkspace(workSpaceId: string): Promise<HttpResponse<DeleteWorkspaceResponse> | null> {
   try {
-    const response = await fetcher(`/${workSpaceId}`, {
+    const response = await fetcher(`/api/workspace/${workSpaceId}`, {
       method: 'DELETE',
+      body: JSON.stringify({
+        userId: useAuthStore.getState().userInfo?.userId,
+      }),
     });
 
     return response as HttpResponse<DeleteWorkspaceResponse>;
@@ -147,7 +146,7 @@ export async function deleteWorkspace(workSpaceId: string): Promise<HttpResponse
 */
 export async function makeInviteLink(workSpaceId: string): Promise<HttpResponse<InviteLinkResponse> | null> {
   try {
-    const response = await fetcher(`/${workSpaceId}/create-invite-link`, {
+    const response = await fetcher(`/api/workspace/${workSpaceId}/create-invite-link`, {
       method: 'POST',
     });
 
@@ -165,7 +164,7 @@ export async function makeInviteLink(workSpaceId: string): Promise<HttpResponse<
 */
 export async function inviteToken(token: string): Promise<HttpResponse<InviteTokenResponse> | null> {
   try {
-    const response = await fetcher(`/invite-token?token=${token}`, {
+    const response = await fetcher(`/api/workspace/invite-token?token=${token}`, {
       method: 'GET',
     });
 

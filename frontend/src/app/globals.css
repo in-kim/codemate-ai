@@ -48,3 +48,34 @@ body {
   position: relative;
   z-index: 10;
 }
+
+@keyframes typing {
+  from {
+    width: 0;
+  }
+  to {
+    width: 22ch;
+  }
+}
+
+@keyframes erase {
+  from {
+    width: 22ch;
+  }
+  to {
+    width: 0;
+  }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.typing-animation {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  animation: typing 3s steps(22), erase 3s steps(22) 3.5s;
+  animation-iteration-count: infinite;
+}

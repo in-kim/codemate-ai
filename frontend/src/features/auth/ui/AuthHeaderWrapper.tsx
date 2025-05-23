@@ -10,17 +10,16 @@ import { useToastStore } from '@/shared/store/toast-store';
 import { useShallow } from 'zustand/shallow';
 import { executeCode } from '@/shared/lib/services/execution.service';
 import { Button } from '@/shared/ui/button';
-import { useUserAuth } from '@/entities/user/context/UserAuthContext';
 
 export const AuthHeaderWrapper = () => {
   const [isMounted, setIsMounted] = useState(false);
-  const { userInfo } = useUserAuth();
   const { code, language } = useEditorStore();
   const { addExecution } = useExecutionStore();
   const { addToast } = useToastStore(
     useShallow((state) => ({ addToast: state.addToast }))
   );
   const [isExecutingFetching, setIsExecutingFetching] = useState(false);
+  const { userInfo } = useAuthStore(useShallow((state) => ({ userInfo: state.userInfo })));
 
   const handleExercuteCode = useCallback(async () => {
     const errorMessageMap = {

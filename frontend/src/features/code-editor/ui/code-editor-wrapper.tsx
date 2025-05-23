@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { fetcher } from "@/shared/lib/fetcher";
 import { useSocket } from "@/shared/hooks/useSocket";
 import {useAuthStore} from "@/shared/store/auth-store";
+import { isHttpResponseSuccess } from "@/shared/lib/utils";
 
 // 리뷰 API 응답 타입 정의
 interface ReviewResponsePart {
@@ -44,7 +45,7 @@ export function CodeEditorWrapper() {
 
   const [decorations, setDecorations] = useState<string[]>([]);
   const { sendSync } = useSocket({
-    documentId: user.userInfo?.id || '',
+    documentId: user.userInfo?.userId || '',
     userId: user.userInfo?.username || '',
     onMessage: (data: unknown) => {
       const msg = data as { type: string, payload: string };
@@ -123,37 +124,39 @@ export function CodeEditorWrapper() {
         body: JSON.stringify({ code: selectedText, language }),
       });
 
-      // 응답 파싱
-      for (const item of response.data) {
-        for (const part of item?.content?.parts) {
-          try {
-            const text = JSON.parse(part?.text);
-            if (editorRef.current && text.suggestions && text.suggestions.length > 0) {
-              const model = editorRef.current.getModel();
-              if (model) {
-                const newDecorations = text.suggestions.map((suggestion: { line: number; message: string }) => ({
-                  range: new monaco.Range(
-                    suggestion.line, 
-                    1, 
-                    suggestion.line, 
-                    1
-                  ),
-                  options: {
-                    isWholeLine: true,
-                    className: 'review-line-highlight',
-                    hoverMessage: {
-                      value: suggestion.message,
+      if (isHttpResponseSuccess<ReviewResponseItem[]>(response)) {
+        // 응답 파싱
+        for (const item of response.data) {
+          for (const part of item?.content?.parts) {
+            try {
+              const text = JSON.parse(part?.text);
+              if (editorRef.current && text.suggestions && text.suggestions.length > 0) {
+                const model = editorRef.current.getModel();
+                if (model) {
+                  const newDecorations = text.suggestions.map((suggestion: { line: number; message: string }) => ({
+                    range: new monaco.Range(
+                      suggestion.line, 
+                      1, 
+                      suggestion.line, 
+                      1
+                    ),
+                    options: {
+                      isWholeLine: true,
+                      className: 'review-line-highlight',
+                      hoverMessage: {
+                        value: suggestion.message,
+                      },
                     },
-                  },
-                }));
-                const newDecorationIds = editorRef.current.deltaDecorations(decorations, newDecorations);
-                setDecorations(newDecorationIds);
+                  }));
+                  const newDecorationIds = editorRef.current.deltaDecorations(decorations, newDecorations);
+                  setDecorations(newDecorationIds);
+                }
               }
+  
+              setSelectedText('');
+            } catch (error) {
+              console.error('리뷰 결과 파싱 오류:', error);
             }
-
-            setSelectedText('');
-          } catch (error) {
-            console.error('리뷰 결과 파싱 오류:', error);
           }
         }
       }
@@ -185,29 +188,32 @@ export function CodeEditorWrapper() {
 
   return (
     <div className="relative w-full h-full">
-      <CodeEditor
-        value={code}
-        onChange={handleCodeChange}
-        onMount={handleEditorDidMount}
-        onCursorPositionChange={handleCursorPositionChange}
-        language={language}
-        height="calc(100vh - 80px)" // Header 높이 제외
-      >
-        <div className="absolute top-4 right-4 z-10 flex gap-2">
-          {selectedText && (
-            <button
-              onClick={handleRequestReview}
-              className="px-4 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600 transition"
-            >
-              {isReviewLoading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-white"></div>
-              ) : (
-                '선택한 코드 리뷰 요청'
-              )}
-            </button>
-          )}
-        </div>
-      </CodeEditor>
+      <div className=""></div>
+      <div className="py-4">
+        <CodeEditor
+          value={code}
+          onChange={handleCodeChange}
+          onMount={handleEditorDidMount}
+          onCursorPositionChange={handleCursorPositionChange}
+          language={language}
+          height="calc(100vh - 80px)" // Header 높이 제외
+        >
+          <div className="absolute top-4 right-4 z-10 flex gap-2">
+            {selectedText && (
+              <button
+                onClick={handleRequestReview}
+                className="px-4 py-2 bg-blue-500 text-white rounded shadow hover:bg-blue-600 transition"
+              >
+                {isReviewLoading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-white"></div>
+                ) : (
+                  '선택한 코드 리뷰 요청'
+                )}
+              </button>
+            )}
+          </div>
+        </CodeEditor>
+      </div>
     </div>
   );
 }

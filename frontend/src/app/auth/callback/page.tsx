@@ -18,7 +18,7 @@ const AuthCallbackContent = () => {
         const decoded = JSON.parse(atob(userEncoded));
         setUser(decoded);
         addToast('로그인 성공', 'success');
-        router.replace('/');
+        router.push('/onboarding');
       } catch (err) {
         addToast('로그인 실패', 'error');
         console.error('유저 디코딩 실패:', err);

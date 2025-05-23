@@ -1,9 +1,9 @@
 
 import { FormModal } from "@/shared/ui/form-modal/form-modal";
-import { useCreateWorkspace } from "../hooks/use-create-workspace";
+import { CreateWorkspaceModalProps, useCreateWorkspace } from "../hooks/use-create-workspace";
 
-export function CreateWorkspaceModal() {
-  const formProps = useCreateWorkspace();
+export function CreateWorkspaceModal({ callbackSubmit, callbackCloseModal }: CreateWorkspaceModalProps) {
+  const formProps = useCreateWorkspace({ callbackSubmit, callbackCloseModal });
   
   return <FormModal {...formProps} />;
 }

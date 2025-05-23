@@ -24,7 +24,7 @@ export function Layout({ leftSection, mainSection, rightSection }: LayoutProps) 
         </aside>
 
         {/* Code mainSection */}
-        <main className="w-3/5 p-4 overflow-y-auto">
+        <main className="w-3/5 overflow-y-auto">
           {mainSection}
         </main>
 
