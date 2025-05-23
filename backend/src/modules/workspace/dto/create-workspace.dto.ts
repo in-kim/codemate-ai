@@ -2,14 +2,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 
-export class CreateRoomDto {
+export class CreateWorkspaceDto {
   @IsString()
   @ApiProperty({
     example: '개발팀 코드리뷰',
     description: '방 이름',
     required: true,
   })
-  roomName: string;
+  workSpaceName: string;
 
   @ApiProperty({
     example: 'sdfljk124',

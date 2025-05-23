@@ -1,20 +1,20 @@
 // src/models/room.model.ts
 import { Schema, Types, model } from 'mongoose';
 
-export type RoomDocument = Room & Document;
-export interface Room {
-  roomId: string;
-  roomName?: string;
+export type WorkspaceDocument = Workspace & Document;
+export interface Workspace {
+  workSpaceId: string;
+  workSpaceName?: string;
   owner: Types.ObjectId;
   participants: Types.ObjectId[];
   deletedAt?: Date;
   createdAt: Date;
 }
 
-export const RoomSchema = new Schema<Room>(
+export const WorkSpaceSchema = new Schema<Workspace>(
   {
-    roomId: { type: String, required: true, unique: true }, // 소켓 방 ID 또는 초대 링크용
-    roomName: { type: String, required: false }, // 방 이름
+    workSpaceId: { type: String, required: true, unique: true }, // 소켓 방 ID 또는 초대 링크용
+    workSpaceName: { type: String, required: false }, // 방 이름
     owner: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     participants: [{ type: Types.ObjectId, ref: 'User' }],
     deletedAt: { type: Date, default: null },
@@ -23,4 +23,4 @@ export const RoomSchema = new Schema<Room>(
   { timestamps: true }, // createdAt, updatedAt 자동 생성
 );
 
-export const RoomModel = model('Room', RoomSchema);
+export const WorkspaceModel = model('workspace', WorkSpaceSchema);

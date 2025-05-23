@@ -6,15 +6,16 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { nanoid } from 'nanoid';
 import { Model, Types } from 'mongoose';
-import { RoomDocument } from 'src/models/room.model';
-import { CreateRoomDto } from './dto/create-room.dto';
+import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { WorkspaceDocument } from 'src/models/workspace.model';
 
 @Injectable()
-export class RoomService {
+export class WorkspaceService {
   constructor(
-    @InjectModel('Room') private readonly roomModel: Model<RoomDocument>,
+    @InjectModel('workspace')
+    private readonly workspaceModel: Model<WorkspaceDocument>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
@@ -22,26 +23,29 @@ export class RoomService {
   /**
    * 새로운 방을 생성합니다.
    * @param userId 방의 소유자 ID
-   * @param roomName 방 이름
+   * @param workspaceName 방 이름
    * @returns 방 ID, 이름, 생성일
    */
-  async createRoom({ userId, roomName }: CreateRoomDto): Promise<{
-    roomId: string;
-    roomName: string | undefined;
+  async createWorkspace({
+    userId,
+    workSpaceName,
+  }: CreateWorkspaceDto): Promise<{
+    workSpaceId: string;
+    workSpaceName: string | undefined;
     createAt: Date;
   }> {
     try {
-      const room = await this.roomModel.create({
-        roomId: nanoid(10), // 방 ID
+      const workspace = await this.workspaceModel.create({
+        workSpaceId: nanoid(10), // 방 ID
         owner: new Types.ObjectId(userId), // 방 소유자
-        roomName: roomName, // 방 이름
+        workSpaceName: workSpaceName, // 방 이름
         participants: [new Types.ObjectId(userId)], // 방 참여자 (처음에는 소유자만)
       });
 
       return {
-        roomId: room.roomId,
-        roomName: room.roomName,
-        createAt: room.createdAt,
+        workSpaceId: workspace.workSpaceId,
+        workSpaceName: workspace.workSpaceName,
+        createAt: workspace.createdAt,
       };
     } catch (err) {
       console.error(err);
@@ -51,35 +55,35 @@ export class RoomService {
 
   /**
    * 특정 방에 참가합니다.
-   * @param roomId 방 ID
+   * @param workSpaceId 방 ID
    * @param userId 참가할 사용자 ID
    * @returns 방 ID, 참가자 목록
    */
-  async joinRoom(
-    roomId: string,
+  async joinWorkspace(
+    workSpaceId: string,
     userId: string,
-  ): Promise<{ roomId: string; participants: Types.ObjectId[] }> {
+  ): Promise<{ workSpaceId: string; participants: Types.ObjectId[] }> {
     try {
-      const room = await this.roomModel.findOne({ roomId });
+      const workspace = await this.workspaceModel.findOne({ workSpaceId });
 
-      if (!room) {
-        throw new NotFoundException('Room not found');
+      if (!workspace) {
+        throw new NotFoundException('방이 존재하지 않습니다.');
       }
 
-      const alreadyJoined = room.participants.some(
+      const alreadyJoined = workspace.participants.some(
         (participant) => participant.toString() === userId,
       );
 
       if (!alreadyJoined) {
         // 방에 참가자가 추가된다.
-        room.participants.push(new Types.ObjectId(userId));
-        await room.save();
+        workspace.participants.push(new Types.ObjectId(userId));
+        await workspace.save();
       }
 
       return {
-        roomId: room.roomId,
+        workSpaceId: workspace.workSpaceId,
         // 방에 참가한 모든 사용자 목록
-        participants: room.participants,
+        participants: workspace.participants,
       };
     } catch (err) {
       console.error(err);
@@ -89,20 +93,20 @@ export class RoomService {
 
   /**
    * 방에서 사용자를 퇴장합니다.
-   * @param roomId 방 ID
+   * @param workSpaceId 방 ID
    * @param userId 퇴장할 사용자 ID
    * @returns 방 ID, 방에 남은 사용자 목록
    */
-  async leaveRoom(roomId: string, userId: string) {
+  async leaveWorkspace(workSpaceId: string, userId: string) {
     try {
-      const room = await this.roomModel.findOne({ roomId });
+      const workspace = await this.workspaceModel.findOne({ workSpaceId });
 
-      if (!room) {
+      if (!workspace) {
         throw new NotFoundException('해당 방이 존재하지 않습니다.');
       }
 
       // 방에 참가한 사용자인지 확인
-      const isParticipant = room.participants.some(
+      const isParticipant = workspace.participants.some(
         (participant) => participant.toString() === userId,
       );
 
@@ -111,20 +115,20 @@ export class RoomService {
       }
 
       // 방에서 퇴장
-      room.participants = room.participants.filter(
+      workspace.participants = workspace.participants.filter(
         (participant) => participant.toString() !== userId,
       );
 
       // 방에 사용자가 남아 있지 않으면 삭제
-      if (room.participants.length === 0) {
-        room.deletedAt = new Date();
+      if (workspace.participants.length === 0) {
+        workspace.deletedAt = new Date();
       }
 
-      await room.save();
+      await workspace.save();
 
       return {
-        roomId: room.roomId,
-        participants: room.participants,
+        workSpaceId: workspace.workSpaceId,
+        participants: workspace.participants,
       };
     } catch (err) {
       console.error(err);
@@ -137,16 +141,17 @@ export class RoomService {
    * @param userId 사용자 ID
    * @returns 방 목록 (방 ID, 이름, 생성일, 참가자 목록)
    */
-  async getMyRooms(userId: string): Promise<
+  async getMyWorkspaces(userId: string): Promise<
     {
-      roomId: string;
-      roomName: string | undefined;
+      workSpaceId: string;
+      workSpaceName: string | undefined;
       createAt: Date;
       participants: Types.ObjectId[];
+      owner: Types.ObjectId;
     }[]
   > {
     try {
-      const rooms = await this.roomModel
+      const workspaces = await this.workspaceModel
         .find({
           participants: userId,
           deleteAt: null,
@@ -154,11 +159,12 @@ export class RoomService {
         .sort({ updatedAt: -1 });
 
       // 방 정보를 반환
-      return rooms.map((room) => ({
-        roomId: room.roomId,
-        roomName: room.roomName,
-        createAt: room.createdAt,
-        participants: room.participants,
+      return workspaces.map((workspace) => ({
+        workSpaceId: workspace.workSpaceId,
+        workSpaceName: workspace.workSpaceName,
+        createAt: workspace.createdAt,
+        participants: workspace.participants,
+        owner: workspace.owner,
       }));
     } catch (err) {
       console.error(err);
@@ -168,29 +174,29 @@ export class RoomService {
 
   /**
    * 방을 삭제합니다.
-   * @param roomId 방 ID
+   * @param workSpaceId 방 ID
    * @param userId 방의 소유자 ID
    * @returns 방 ID
    */
-  async deleteRoom(
-    roomId: string,
+  async deleteWorkspace(
+    workSpaceId: string,
     userId: string,
-  ): Promise<{ roomId: string }> {
-    const room = await this.roomModel.findOne({ roomId });
+  ): Promise<{ workSpaceId: string }> {
+    const workspace = await this.workspaceModel.findOne({ workSpaceId });
 
-    if (!room) {
+    if (!workspace) {
       throw new NotFoundException('해당 방이 존재하지 않습니다.');
     }
 
-    if (room.owner.toString() !== userId) {
+    if (workspace.owner.toString() !== userId) {
       throw new ForbiddenException('방의 소유자가 아닙니다.');
     }
 
     try {
       // 방을 삭제
-      await this.roomModel.deleteOne({ roomId });
+      await this.workspaceModel.deleteOne({ workSpaceId });
       return {
-        roomId: room.roomId,
+        workSpaceId: workspace.workSpaceId,
       };
     } catch (err) {
       console.error(err);
@@ -199,20 +205,20 @@ export class RoomService {
   }
   /**
    * 초대 링크를 생성합니다.
-   * @param roomId 방 ID
+   * @param workSpaceId 방 ID
    * @param invitedBy 초대한 사람의 ID
    * @returns 초대 링크 URL
    */
-  makeInviteLink(roomId: string, invitedBy: string): { url: string } {
+  makeInviteLink(workSpaceId: string, invitedBy: string): { url: string } {
     const payload = {
-      roomId,
+      workSpaceId,
       invitedBy,
     };
 
     const token = this.jwtService.sign(payload);
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
-    const inviteLink = `${frontendUrl}/room/${roomId}?token=${token}`;
+    const inviteLink = `${frontendUrl}/room/${workSpaceId}?token=${token}`;
 
     return { url: inviteLink };
   }
@@ -228,7 +234,6 @@ export class RoomService {
         secret: this.configService.get<string>('JWT_INVITE_SECRET'),
       });
 
-      console.log('payload', payload);
       return !!payload;
     } catch (err) {
       console.error(err);

@@ -7,8 +7,8 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { CreateRoomDto } from './dto/create-room.dto';
-import { RoomService } from './room.service';
+import { CreateWorkspaceDto } from './dto/create-workspace.dto';
+import { WorkspaceService } from './workspace.service';
 import {
   ApiBody,
   ApiOperation,
@@ -21,13 +21,13 @@ import { Public } from 'src/shared/decorators/public.decorator';
 @Public()
 @ApiTags('Workspace')
 @Controller('/api/workspace')
-export class RoomController {
-  constructor(private readonly roomService: RoomService) {}
+export class WorkspaceController {
+  constructor(private readonly workspaceService: WorkspaceService) {}
 
   @Post()
   @ApiOperation({ summary: '페어 코딩 방 만들기' })
   @ApiBody({
-    type: CreateRoomDto,
+    type: CreateWorkspaceDto,
     description: '방 생성 정보',
   })
   /**
@@ -36,17 +36,19 @@ export class RoomController {
    * @param dto 방 생성 정보
    * @returns 방 ID, 이름, 생성일
    */
-  async createRoom(
-    @Body() body: CreateRoomDto,
-  ): Promise<{ roomId: string; roomName: string | undefined; createAt: Date }> {
-    return await this.roomService.createRoom({
+  async createRoom(@Body() body: CreateWorkspaceDto): Promise<{
+    workSpaceId: string;
+    workSpaceName: string | undefined;
+    createAt: Date;
+  }> {
+    return await this.workspaceService.createWorkspace({
       userId: body.userId,
-      roomName: body.roomName,
+      workSpaceName: body.workSpaceName,
     });
   }
-  @Post('/:roomId/join')
+  @Post('/:workspaceId/join')
   @ApiOperation({ summary: '페어 코딩 방 참여' })
-  @ApiParam({ name: 'roomId', type: 'string', description: '방 ID' })
+  @ApiParam({ name: 'workspaceId', type: 'string', description: '방 ID' })
   @ApiBody({
     schema: {
       type: 'object',
@@ -63,7 +65,7 @@ export class RoomController {
         data: {
           type: 'object',
           properties: {
-            roomId: { type: 'string' },
+            workspaceId: { type: 'string' },
             participants: { type: 'array', items: { type: 'string' } },
           },
         },
@@ -72,19 +74,19 @@ export class RoomController {
   })
   /**
    * 방에 참가합니다.
-   * @param roomId 방 ID
+   * @param workspaceId 방 ID
    * @param body.userId 참가할 사용자 ID
    * @returns 방 ID, 방에 참가한 모든 사용자 목록
    */
   async joinRoom(
-    @Param('roomId') roomId: string,
+    @Param('workspaceId') workspaceId: string,
     @Body() body: { userId: string },
   ) {
-    return await this.roomService.joinRoom(roomId, body.userId);
+    return await this.workspaceService.joinWorkspace(workspaceId, body.userId);
   }
 
-  @Delete('/:roomId/leave')
-  @ApiParam({ name: 'roomId', type: 'string', description: '방 ID' })
+  @Delete('/:workspaceId/leave')
+  @ApiParam({ name: 'workspaceId', type: 'string', description: '방 ID' })
   @ApiBody({
     schema: {
       type: 'object',
@@ -102,7 +104,7 @@ export class RoomController {
         data: {
           type: 'object',
           properties: {
-            roomId: { type: 'string' },
+            workspaceId: { type: 'string' },
             participants: { type: 'array', items: { type: 'string' } },
           },
         },
@@ -112,12 +114,15 @@ export class RoomController {
   /**
    * 방에서 퇴장합니다.
    * @param req Request
-   * @param roomId 방 ID
+   * @param workSpaceId 방 ID
    * @returns 방 ID, 방에 남은 사용자 목록
    */
-  async leaveRoom(@Body() body, @Param('roomId') roomId: string) {
+  async leaveRoom(
+    @Body() body: { userId: string },
+    @Param('workSpaceId') workSpaceId: string,
+  ) {
     const userId: string = body.userId;
-    return await this.roomService.leaveRoom(roomId, userId);
+    return await this.workspaceService.leaveWorkspace(workSpaceId, userId);
   }
 
   @Get('/my/:userId')
@@ -135,8 +140,8 @@ export class RoomController {
           items: {
             type: 'object',
             properties: {
-              roomId: { type: 'string' },
-              roomName: { type: 'string' },
+              workSpaceId: { type: 'string' },
+              workSpaceName: { type: 'string' },
               createAt: { type: 'string' },
               participants: { type: 'array', items: { type: 'string' } },
             },
@@ -150,13 +155,12 @@ export class RoomController {
    * @param userId 사용자 ID
    * @returns 방 목록 (방 ID, 방 이름, 생성일, 참가자 목록)
    */
-  async getMyRooms(@Param('userId') userId: string) {
-    console.log('userId: ', userId);
+  async getMyWorkspace(@Param('userId') userId: string) {
     // 내가 속한 방 목록을 가져옴
-    return await this.roomService.getMyRooms(userId);
+    return await this.workspaceService.getMyWorkspaces(userId);
   }
 
-  @Delete('/:roomId')
+  @Delete('/:workspaceId')
   @ApiBody({
     schema: {
       type: 'object',
@@ -174,7 +178,7 @@ export class RoomController {
         data: {
           type: 'object',
           properties: {
-            roomId: { type: 'string' },
+            workspaceId: { type: 'string' },
           },
         },
       },
@@ -182,16 +186,16 @@ export class RoomController {
   })
   /**
    * 방을 삭제합니다.
-   * @param roomId 방 ID
+   * @param workspaceId 방 ID
    * @param body.userId 방의 소유자 ID
    * @returns 방 ID
    */
-  async deleteRoom(@Param('roomId') roomId: string, @Body() body) {
+  async deleteRoom(@Param('workspaceId') workspaceId: string, @Body() body) {
     const userId: string = body.userId;
-    return await this.roomService.deleteRoom(roomId, userId);
+    return await this.workspaceService.deleteWorkspace(workspaceId, userId);
   }
 
-  @Post('/:roomId/create-invite-link')
+  @Post('/:workspaceId/create-invite-link')
   @ApiBody({
     schema: {
       type: 'object',
@@ -217,15 +221,18 @@ export class RoomController {
   })
   /**
    * 방 초대 링크 생성
-   * @param roomId 방 ID
+   * @param workspaceId 방 ID
    * @param body.userId 참가할 사용자 ID
    * @returns 방 초대 링크
    */
-  generateInviteLink(@Param('roomId') roomId: string, @Body() body) {
-    return this.roomService.makeInviteLink(roomId, body.userId as string);
+  generateInviteLink(@Param('workspaceId') workspaceId: string, @Body() body) {
+    return this.workspaceService.makeInviteLink(
+      workspaceId,
+      body.userId as string,
+    );
   }
 
-  @Get('/:roomId/invite-token')
+  @Get('/:workspaceId/invite-token')
   @ApiOperation({ summary: '방 초대 링크 검증' })
   @ApiResponse({
     description: '방 초대 링크 검증 성공',
@@ -237,7 +244,7 @@ export class RoomController {
         data: {
           type: 'object',
           properties: {
-            roomId: { type: 'string' },
+            workspaceId: { type: 'string' },
             invitedBy: { type: 'string' },
           },
         },
@@ -246,14 +253,14 @@ export class RoomController {
   })
   /**
    * 방 초대 링크 검증
-   * @param roomId 방 ID
+   * @param workspaceId 방 ID
    * @param token 초대 링크 토큰
    * @returns 초대 링크 토큰이 포함하는 정보 (방 ID, 초대한 사람의 ID)
    */
   verifyInviteToken(
-    @Param('roomId') roomId: string,
+    @Param('workspaceId') workspaceId: string,
     @Query('token') token: string,
   ) {
-    return this.roomService.verifyInvieToken(token);
+    return this.workspaceService.verifyInvieToken(token);
   }
 }

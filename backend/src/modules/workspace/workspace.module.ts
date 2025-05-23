@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { RoomController } from './room.controller';
-import { RoomService } from './room.service';
-import { RoomSchema } from 'src/models/room.model';
+import { WorkspaceController } from './workspace.controller';
+import { WorkspaceService } from './workspace.service';
+import { WorkSpaceSchema } from 'src/models/workspace.model';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: 'Room', schema: RoomSchema }]),
+    MongooseModule.forFeature([{ name: 'workspace', schema: WorkSpaceSchema }]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -20,7 +20,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       inject: [ConfigService],
     }),
   ],
-  controllers: [RoomController],
-  providers: [RoomService],
+  controllers: [WorkspaceController],
+  providers: [WorkspaceService],
 })
-export class RoomModule {}
+export class WorkspaceModule {}
