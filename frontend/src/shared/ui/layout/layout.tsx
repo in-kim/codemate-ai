@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { FooterBar } from '../footer-bar';
 import { AuthHeaderWrapper } from '@/features/auth/ui/AuthHeaderWrapper';
 import { Terminal } from '@/features/terminal';
+import { SideSection } from '../SideSection';
 
 
 export interface LayoutProps {
@@ -19,19 +20,23 @@ export function Layout({ leftSection, mainSection, rightSection }: LayoutProps) 
       {/* 본문 영역 */}
       <div className="flex flex-1 overflow-hidden">
         {/* leftSection */}
-        <aside className="w-1/5 border-r border-[#333] overflow-y-auto bg-[#252526]">
-          {leftSection}
-        </aside>
+        <SideSection position="left" initialVisible={true} width={350}>
+          <aside className="w-full h-full border-r border-[#333] overflow-y-auto bg-[#252526]">
+            {leftSection}
+          </aside>
+        </SideSection>
 
         {/* Code mainSection */}
-        <main className="w-3/5 overflow-y-auto">
+        <main className="w-full h-full overflow-y-auto">
           {mainSection}
         </main>
 
         {/* Review */}
-        <aside className="w-1/5 border-l border-[#333] p-4 overflow-y-auto bg-[#252526]">
-          {rightSection}
-        </aside>
+        <SideSection position="right" initialVisible={true} width={350}>
+          <aside className="w-full h-full border-l border-[#333] p-4 overflow-y-auto bg-[#252526]">
+            {rightSection}
+          </aside>
+        </SideSection>
       </div>
 
       {/* 하단 30%: 터미널 */}

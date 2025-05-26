@@ -1,48 +1,29 @@
-'use client';
-import { IWorkspace } from '@/shared/lib/services/workspace.service';
-import { cn } from '@/shared/lib/utils';
-import { IconButton } from '@/shared/ui/iconButon/iconButton';
+import { Suspense } from 'react';
+import { WorkspaceListClient } from './workspace-list-client';
 import useWorkspaceData from '../hooks/use-workspace-data';
 
-export interface Workspace {
-  id: string;
-  name: string;
-}
+// 인터페이스는 클라이언트 컴포넌트로 이동
 
-export interface WorkspaceListProps {
-  workspaces: Workspace[];
-}
-
-function WorkspaceDeleteButton({ workspace }: { workspace: IWorkspace }) {
-  const { isLoading, handleDeleteWorkspace, handleLeaveWorkspace, userInfo } = useWorkspaceData();
-
-  return userInfo?.userId === workspace.owner ?(
-    <IconButton onClick={() => handleDeleteWorkspace(workspace.workSpaceId, workspace.workSpaceName as string)} icon="trash" disabled={isLoading}/>
-  ) : <IconButton onClick={() => handleLeaveWorkspace(workspace.workSpaceId, workspace.workSpaceName as string)} icon="leave" disabled={isLoading}/>
-}
+// WorkspaceDeleteButton 컴포넌트는 클라이언트 컴포넌트로 이동
 
 export function WorkspaceList() {
   const { workspaces, selectedWorkspaceId, handleSelectWorkspace } = useWorkspaceData();
 
   return (
     <div className="flex flex-col space-y-2 py-2 px-3">
-      {workspaces.length > 0 ? (
-        workspaces.map((workspace) => (
-          <div
-            key={workspace.workSpaceId}
-            className={cn(
-              'flex items-center justify-between p-3 rounded-md hover:bg-[#333]',
-              selectedWorkspaceId === workspace.workSpaceId ? 'bg-[#333]' : 'bg-[#252526]'
-            )}
-            onClick={() => handleSelectWorkspace(workspace.workSpaceId)}
-          >
-            <span className="text-sm">{workspace.workSpaceName}</span>
-            <WorkspaceDeleteButton workspace={workspace} />
+      <Suspense fallback={
+        <div className="flex flex-col space-y-2">
+          <div className="rounded-md bg-[#252526]">
+            <div className="h-[44px] w-full bg-[#333] animate-pulse rounded"></div>
           </div>
-        ))
-      ) : (
-        <div className="text-sm text-gray-500">워크스페이스가 없습니다.</div>
-      )}
+        </div>
+      }>
+        <WorkspaceListClient 
+          workspaces={workspaces} 
+          selectedWorkspaceId={selectedWorkspaceId} 
+          onSelectWorkspace={handleSelectWorkspace} 
+        />
+      </Suspense>
     </div>
   );
 }

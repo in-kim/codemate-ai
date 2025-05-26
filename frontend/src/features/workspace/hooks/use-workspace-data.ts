@@ -6,7 +6,7 @@ import { useToastStore } from "@/shared/store/toast-store";
 import { useWorkspaceStore } from "@/shared/store/workspace-store";
 import { User } from "@/shared/types/user";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useShallow } from "zustand/shallow";
 
 interface UseWorkspaceDataReturn {
@@ -21,6 +21,10 @@ interface UseWorkspaceDataReturn {
   userInfo: User | null;
 }
 
+/**
+ * 워크스페이스 데이터 훅
+ * @returns 워크스페이스 데이터
+ */
 export default function useWorkspaceData(): UseWorkspaceDataReturn {
   const { workspaces, addWorkspace, selectedWorkspaceId, selectWorkspace } = useWorkspaceStore(
     useShallow((state) => ({
@@ -49,7 +53,10 @@ export default function useWorkspaceData(): UseWorkspaceDataReturn {
 
   const userId = userInfo?.userId;
 
-  const fetchWorkspaces = async () => {
+  /**
+   * 워크스페이스 목록 가져오기
+   */
+  const fetchWorkspaces = useCallback(async () => {
     setError(null);
     startLoading();
     
@@ -67,9 +74,14 @@ export default function useWorkspaceData(): UseWorkspaceDataReturn {
     } finally {
       stopLoading();
     }
-  };
+  }, [userId, addWorkspace, selectWorkspace, startLoading, stopLoading]);
 
-  const handleDeleteWorkspace = async (workspaceId: string, workspaceName: string) => {
+  /**
+   * 워크스페이스 삭제 핸들러
+   * @param workspaceId 삭제할 워크스페이스 ID
+   * @param workspaceName 삭제할 워크스페이스 이름
+   */
+  const handleDeleteWorkspace = useCallback(async (workspaceId: string, workspaceName: string) => {
     try {
       startLoading();
       const response = await deleteWorkspace(workspaceId);
@@ -85,9 +97,14 @@ export default function useWorkspaceData(): UseWorkspaceDataReturn {
     } finally {
       stopLoading();
     }
-  }
+  }, [fetchWorkspaces, startLoading, stopLoading, addToast]);
 
-  const handleLeaveWorkspace = async (workspaceId: string, workspaceName: string) => {
+  /**
+   * 워크스페이스 퇴장 핸들러
+   * @param workspaceId 퇴장할 워크스페이스 ID
+   * @param workspaceName 퇴장할 워크스페이스 이름
+   */
+  const handleLeaveWorkspace = useCallback(async (workspaceId: string, workspaceName: string) => {
     try {
       startLoading();
       const response = await leaveWorkspace(workspaceId, userInfo?.userId as string);
@@ -103,20 +120,30 @@ export default function useWorkspaceData(): UseWorkspaceDataReturn {
     } finally {
       stopLoading();
     }
-  }
+  }, [fetchWorkspaces, startLoading, stopLoading, addToast, userInfo]);
 
-  const handleSelectWorkspace = (workspaceId: string) => {
+  /**
+   * 워크스페이스 선택 핸들러
+   * @param workspaceId 선택된 워크스페이스 ID
+   */
+  const handleSelectWorkspace = useCallback((workspaceId: string) => {
+    console.log('????? : ', workspaceId);
     selectWorkspace(workspaceId);
-    router.replace(`/workspace/${workspaceId}`);
-  }
-
+    router.push(`/workspace/${workspaceId}`);
+  }, [selectWorkspace, router]);
+  
 
 
   useEffect(() => {
-    if (userId) {
+    // 워크스페이스가 없으면 가져오기
+    if (userId && workspaces.length === 0) {
       fetchWorkspaces();
     }
-  }, [userId]);
+  }, [userId, fetchWorkspaces, workspaces]);
+
+  useEffect(() => {
+    console.log(selectedWorkspaceId);
+  }, [selectedWorkspaceId]);
 
   return {
     workspaces,

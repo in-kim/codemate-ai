@@ -85,12 +85,12 @@ export async function getWorkspaceData(workspaceId: string, joinToken?: string):
       };
     }
     
-    // 접근 권한이 없을경우 참여중인 워크스페이스[0] 로 접근
+    // 접근 권한이 있는 경우 요청된 워크스페이스 ID 그대로 사용
     return { 
       status: IStatus.SUCCESS, 
       userInfo: userInfo.data, 
       workspaces,
-      workspaceId: workspaces[0].workSpaceId
+      workspaceId: workspaceId
     };
   } catch (err) {
     console.error(err);
