@@ -47,8 +47,6 @@ export class AuthService implements OnModuleInit {
       'JWT_REFRESH_EXPIRES_IN',
     );
 
-    console.log('config : ', jwtSecret, jwtRefreshExpiresIn);
-
     if (!jwtSecret || !jwtRefreshExpiresIn) {
       throw new Error('JWT 설정이 누락되었습니다. .env 파일을 확인하세요.');
     }

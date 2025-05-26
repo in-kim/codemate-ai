@@ -17,6 +17,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Public } from 'src/shared/decorators/public.decorator';
+import { Types } from 'mongoose';
 
 @Public()
 @ApiTags('Workspace')
@@ -82,11 +83,13 @@ export class WorkspaceController {
     @Param('workspaceId') workspaceId: string,
     @Body() body: { userId: string },
   ) {
-    return await this.workspaceService.joinWorkspace(workspaceId, body.userId);
+    return await this.workspaceService.joinWorkspace(
+      workspaceId,
+      new Types.ObjectId(body.userId),
+    );
   }
 
-  @Delete('/:workspaceId/leave')
-  @ApiParam({ name: 'workspaceId', type: 'string', description: '방 ID' })
+  @Delete('/:workSpaceId/leave')
   @ApiBody({
     schema: {
       type: 'object',

@@ -69,7 +69,6 @@ export class AuthController {
     req: Request & UserDocument,
   ) {
     const user = req.user;
-    console.log(user);
 
     if (!user) {
       throw new UnauthorizedException('유저 정보가 없습니다.');

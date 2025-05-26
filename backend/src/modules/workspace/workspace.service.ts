@@ -9,13 +9,16 @@ import { Model, Types } from 'mongoose';
 import { CreateWorkspaceDto } from './dto/create-workspace.dto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { WorkspaceDocument } from 'src/models/workspace.model';
+import { Participants, WorkspaceDocument } from 'src/models/workspace.model';
+import { UserDocument } from 'src/models/user.model';
 
 @Injectable()
 export class WorkspaceService {
   constructor(
     @InjectModel('workspace')
     private readonly workspaceModel: Model<WorkspaceDocument>,
+    @InjectModel('user')
+    private readonly userModel: Model<UserDocument>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
@@ -35,11 +38,18 @@ export class WorkspaceService {
     createAt: Date;
   }> {
     try {
+      const user = await this.userModel.findById(userId);
       const workspace = await this.workspaceModel.create({
         workSpaceId: nanoid(10), // 방 ID
         owner: new Types.ObjectId(userId), // 방 소유자
         workSpaceName: workSpaceName, // 방 이름
-        participants: [new Types.ObjectId(userId)], // 방 참여자 (처음에는 소유자만)
+        participants: [
+          {
+            userId: new Types.ObjectId(userId),
+            username: user?.username as string,
+            avatarUrl: user?.avatarUrl,
+          },
+        ], // 방 참여자 (처음에는 소유자만)
       });
 
       return {
@@ -61,22 +71,27 @@ export class WorkspaceService {
    */
   async joinWorkspace(
     workSpaceId: string,
-    userId: string,
-  ): Promise<{ workSpaceId: string; participants: Types.ObjectId[] }> {
+    userId: Types.ObjectId,
+  ): Promise<{ workSpaceId: string; participants: Participants[] }> {
     try {
       const workspace = await this.workspaceModel.findOne({ workSpaceId });
+      const user = await this.userModel.findById(userId);
 
       if (!workspace) {
         throw new NotFoundException('방이 존재하지 않습니다.');
       }
 
       const alreadyJoined = workspace.participants.some(
-        (participant) => participant.toString() === userId,
+        (participant) => participant.userId === userId,
       );
 
       if (!alreadyJoined) {
         // 방에 참가자가 추가된다.
-        workspace.participants.push(new Types.ObjectId(userId));
+        workspace.participants.push({
+          userId: userId,
+          username: user?.username as string,
+          avatarUrl: user?.avatarUrl,
+        });
         await workspace.save();
       }
 
@@ -107,7 +122,7 @@ export class WorkspaceService {
 
       // 방에 참가한 사용자인지 확인
       const isParticipant = workspace.participants.some(
-        (participant) => participant.toString() === userId,
+        (participant) => participant.userId.toString() === userId,
       );
 
       if (!isParticipant) {
@@ -116,7 +131,7 @@ export class WorkspaceService {
 
       // 방에서 퇴장
       workspace.participants = workspace.participants.filter(
-        (participant) => participant.toString() !== userId,
+        (participant) => participant.userId.toString() !== userId,
       );
 
       // 방에 사용자가 남아 있지 않으면 삭제
@@ -146,14 +161,14 @@ export class WorkspaceService {
       workSpaceId: string;
       workSpaceName: string | undefined;
       createAt: Date;
-      participants: Types.ObjectId[];
+      participants: Participants[];
       owner: Types.ObjectId;
     }[]
   > {
     try {
       const workspaces = await this.workspaceModel
         .find({
-          participants: userId,
+          'participants.userId': userId,
           deleteAt: null,
         })
         .sort({ updatedAt: -1 });
@@ -218,7 +233,7 @@ export class WorkspaceService {
     const token = this.jwtService.sign(payload);
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
-    const inviteLink = `${frontendUrl}/room/${workSpaceId}?token=${token}`;
+    const inviteLink = `${frontendUrl}/workspace/${workSpaceId}?token=${token}`;
 
     return { url: inviteLink };
   }
@@ -227,14 +242,14 @@ export class WorkspaceService {
    * @param token 초대 링크 토큰
    * @returns 초대 링크 토큰이 포함하는 정보 (방 ID, 초대한 사람의 ID)
    */
-  verifyInvieToken(token: string): boolean {
+  verifyInvieToken(token: string): JwtService {
     try {
       // 초대 링크 토큰을 검증
       const payload = this.jwtService.verify(token, {
         secret: this.configService.get<string>('JWT_INVITE_SECRET'),
       });
 
-      return !!payload;
+      return payload as JwtService;
     } catch (err) {
       console.error(err);
       throw new Error('초대 링크 검증에 실패했습니다.');

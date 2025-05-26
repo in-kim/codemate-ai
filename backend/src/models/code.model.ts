@@ -30,7 +30,7 @@ const CodeSchema = new mongoose.Schema(
       type: String,
       default: 'typescript',
     },
-    roomId: {
+    workSpaceId: {
       type: String,
       required: true,
       unique: true,

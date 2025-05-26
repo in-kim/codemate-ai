@@ -5,10 +5,14 @@ import { WorkspaceService } from './workspace.service';
 import { WorkSpaceSchema } from 'src/models/workspace.model';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { UserSchema } from 'src/models/user.model';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: 'workspace', schema: WorkSpaceSchema }]),
+    MongooseModule.forFeature([
+      { name: 'workspace', schema: WorkSpaceSchema },
+      { name: 'user', schema: UserSchema },
+    ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
