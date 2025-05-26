@@ -1,12 +1,7 @@
 import { create } from 'zustand';
-import { createJSONStorage, devtools, persist } from 'zustand/middleware';
+import {  devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-
-interface User {
-  id: string;
-  username: string;
-  avatarUrl: string;
-}
+import { User } from '../types/user';
 
 interface AuthState {
   userInfo: User | null;
@@ -25,25 +20,17 @@ const initialState = {
 
 export const useAuthStore = create<AuthState>()(
   devtools(
-    persist(
-      immer((set, get) => ({
-        ...initialState,
-        setUser: (user: User) => set({ userInfo: user }),
-        getUser: () => get().userInfo,
-        getIsLogin: () => get().userInfo !== null,
-        clearUser: () => set({ userInfo: null }),
-        setHydrated: (hydrated: boolean) => set({ isHydrated: hydrated }),
-      })),
-      {
-        name: 'AuthStore',
-        storage: createJSONStorage(() => localStorage),
-        version: 1,
-        onRehydrateStorage: () => (state) => {
-          if (state) {
-            useAuthStore.getState().setHydrated(true);
-          }
-        },
-      }
-    )
+    immer((set, get) => ({
+      ...initialState,
+      setUser: (user: User) => set({ userInfo: user }),
+      getUser: () => get().userInfo,
+      getIsLogin: () => get().userInfo !== null,
+      clearUser: () => set({ userInfo: null }),
+      setHydrated: (hydrated: boolean) => set({ isHydrated: hydrated }),
+    })),
+    {
+      name: 'AuthStore',
+      version: 1,
+    }
   )
 );

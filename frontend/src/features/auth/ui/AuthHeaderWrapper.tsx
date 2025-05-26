@@ -13,13 +13,13 @@ import { Button } from '@/shared/ui/button';
 
 export const AuthHeaderWrapper = () => {
   const [isMounted, setIsMounted] = useState(false);
-  const user = useAuthStore().getUser();
   const { code, language } = useEditorStore();
   const { addExecution } = useExecutionStore();
   const { addToast } = useToastStore(
     useShallow((state) => ({ addToast: state.addToast }))
   );
   const [isExecutingFetching, setIsExecutingFetching] = useState(false);
+  const { userInfo } = useAuthStore(useShallow((state) => ({ userInfo: state.userInfo })));
 
   const handleExercuteCode = useCallback(async () => {
     const errorMessageMap = {
@@ -85,8 +85,8 @@ export const AuthHeaderWrapper = () => {
             </Button>
           <div className='overflow-hidden rounded-full border-1 border-transparent'>
             {
-              isMounted && user ? (
-                <Image src={user.avatarUrl} alt={user.username} width={24} height={24} />
+              isMounted && userInfo ? (
+                <Image src={userInfo.avatarUrl} alt={userInfo.username} width={24} height={24} />
               ) : (
                 <Link href={`https://github.com/login/oauth/authorize?client_id=${process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID}&redirect_uri=${process.env.NEXT_PUBLIC_GITHUB_REDIRECT_URI}`} title="GitHub 로그인">
                   <Image src="/github-mark-white.svg" alt="GitHub" width={24} height={24} />

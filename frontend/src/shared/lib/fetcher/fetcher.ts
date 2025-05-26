@@ -1,5 +1,6 @@
 import { useAuthStore } from "@/shared/store/auth-store";
 import { useToastStore } from "@/shared/store/toast-store";
+import { logError } from "../utils/errorLogger";
 
 interface FetcherOptions extends RequestInit {
   skipAuth?: boolean; // (추후 인증 확장용, 지금은 사용 X)
@@ -11,14 +12,32 @@ interface FetcherOptions extends RequestInit {
  * @param options - fetch options
  * @returns 응답 데이터 (타입 안전)
  */
-export async function fetcher<TResponse>(url: string, options?: FetcherOptions): Promise<TResponse> {
-  const response = await fetch(url, {
+export async function fetcher<TResponse>(url: string, options?: FetcherOptions): Promise<TResponse | Error> {
+  const isServer = typeof window === 'undefined';
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string> || {}),
+  }
+  
+  // 서버 컴포넌트에서만 실행되는 코드
+  if (isServer) {
+    // 동적 임포트를 사용하여 서버 전용 모듈이 클라이언트 번들에 포함되지 않도록 함
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('accessToken');
+    const refreshToken = cookieStore.get('refreshToken');
+
+    const cookieHeader = [];
+    if (accessToken) cookieHeader.push(`accessToken=${accessToken.value}`);
+    if (refreshToken) cookieHeader.push(`refreshToken=${refreshToken.value}`);
+
+    headers['Cookie'] = cookieHeader.join('; ');
+  }
+  
+  const response = await fetch(isServer ? `${process.env.BACKEND_API_URL}${url}` : url, {
     ...options,
     credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options?.headers || {}),
-    },
+    headers: headers,
   });
 
   const contentType = response.headers.get('Content-Type');
@@ -32,12 +51,12 @@ export async function fetcher<TResponse>(url: string, options?: FetcherOptions):
     }
 
     if (response.status === 401) {
-      console.log('401');
       if (typeof window !== 'undefined') {
         useToastStore.getState().addToast('로그인이 필요합니다.', 'error');
         useAuthStore.getState().clearUser();
       }
-      console.error('Unauthorized');
+
+      logError("Unauthorized");
     }
 
     const errorMessage = errorBody?.message || response.statusText || 'API Error';

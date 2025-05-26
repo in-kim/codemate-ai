@@ -2,17 +2,21 @@ const express = require('express');
 const { createServer } = require('http');
 const { Server } = require("socket.io");
 const { handleSocketConnection } = require('./dist/socket-handler');
-const path = require('path');
+const cors = require('cors');
 
 const app = express();
 const httpServer = createServer(app);
-const io = new Server(httpServer, {
-  cors: { origin: "*" }
-});
 
-// Serve test page
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'test.html'));
+app.use(cors({
+  origin: 'http://localhost:3000', // 프론트 URL
+  credentials: true,
+}));
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: 'http://localhost:3000',
+    credentials: true,
+  },
 });
 
 io.on("connection", handleSocketConnection);

@@ -1,3 +1,4 @@
+"use client";
 import { useToastStore } from "@/shared/store/toast-store";
 import { Toast } from "@/shared/ui/toast";
 import { useShallow } from "zustand/shallow";

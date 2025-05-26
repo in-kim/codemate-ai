@@ -10,7 +10,7 @@ export function Header({
 }: HeaderProps) {
   return (
     <header className={cn('flex items-center justify-between p-3 bg-[#252526] border-b border-[#333]')}>
-      <div className="text-lg font-semibold text-gray-200">codeMate.AI</div>
+      <div className="text-lg font-semibold text-gray-200">CodeMate.AI</div>
       {
         rightSlot
       }

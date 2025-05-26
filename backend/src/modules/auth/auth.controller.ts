@@ -13,7 +13,7 @@ import { ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 import { Request } from 'express';
 import { UserDocument } from 'src/models/user.model';
 
-@Controller('auth')
+@Controller('/api/auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -69,7 +69,6 @@ export class AuthController {
     req: Request & UserDocument,
   ) {
     const user = req.user;
-    console.log(user);
 
     if (!user) {
       throw new UnauthorizedException('유저 정보가 없습니다.');

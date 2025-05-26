@@ -1,5 +1,6 @@
 import { cn } from '@/shared/lib/utils'; // 클래스 합치는 유틸 (아직 없으면 utils.ts에 같이 만들자)
 import { ButtonHTMLAttributes, DetailedHTMLProps } from 'react';
+import { Loading } from '../loading';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 
@@ -30,7 +31,7 @@ export function Button({
       disabled={disabled || isLoading}
       {...props}
     >
-      {isLoading ? 'Loading...' : children}
+      {isLoading ? <Loading /> : children}
     </button>
   );
 }

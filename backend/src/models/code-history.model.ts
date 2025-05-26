@@ -12,7 +12,8 @@ const CodeHistorySchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
-    roomId: { type: String, required: true }, // room.roomId
+    worSpaceId: { type: String, required: true },
+    code: { type: String, required: true },
   },
   {
     timestamps: false,

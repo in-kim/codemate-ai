@@ -42,19 +42,19 @@ export class AuthService implements OnModuleInit {
     accessToken: string;
     refreshToken: string;
   } {
-    const config = this.configService.get<{
-      JWT_SECRET: string;
-      JWT_REFRESH_EXPIRES_IN: string;
-    }>('');
+    const jwtSecret = this.configService.get<string>('JWT_SECRET');
+    const jwtRefreshExpiresIn = this.configService.get<string>(
+      'JWT_REFRESH_EXPIRES_IN',
+    );
 
-    if (!config?.JWT_SECRET || !config.JWT_REFRESH_EXPIRES_IN) {
+    if (!jwtSecret || !jwtRefreshExpiresIn) {
       throw new Error('JWT 설정이 누락되었습니다. .env 파일을 확인하세요.');
     }
 
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, {
-      secret: config.JWT_SECRET,
-      expiresIn: config.JWT_REFRESH_EXPIRES_IN,
+      secret: jwtSecret,
+      expiresIn: jwtRefreshExpiresIn,
     });
 
     return { accessToken, refreshToken };
@@ -84,7 +84,7 @@ export class AuthService implements OnModuleInit {
 
       const { id, login, email, avatar_url } = userResponse.data;
 
-      console.log('userResponse : ', userResponse.data);
+      // console.log('userResponse : ', userResponse.data);
 
       // 3. DB에 유저 정보 upsert
       const user = await this.userModel.findOneAndUpdate(

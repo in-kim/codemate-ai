@@ -9,7 +9,7 @@ export interface ReviewFormProps {
   onSubmit: (comment: string) => void;
 }
 
-export function ReviewForm({ onSubmit }: ReviewFormProps) {
+export function ReviewForm() {
   const [comment, setComment] = useState('');
   const [error, setError] = useState('');
 
@@ -22,7 +22,6 @@ export function ReviewForm({ onSubmit }: ReviewFormProps) {
     }
 
     setError('');
-    onSubmit(comment.trim());
     setComment('');
   };
 

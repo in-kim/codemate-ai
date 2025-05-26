@@ -6,7 +6,7 @@ import { ExecutionModule } from './modules/execution/execution.module';
 import { ReviewModule } from './modules/review/review.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { LanguageModule } from './modules/language/language.module';
-import { RoomModule } from './modules/room/room.module';
+import { WorkspaceModule } from './modules/workspace/workspace.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -24,7 +24,7 @@ import { RoomModule } from './modules/room/room.module';
     ReviewModule,
     AuthModule,
     LanguageModule,
-    RoomModule,
+    WorkspaceModule,
   ],
 })
 export class AppModule {}
