@@ -4,27 +4,27 @@ import { RoomManager } from './rooms/room-manager';
 const roomManager = new RoomManager();
 
 export function handleSocketConnection(socket: Socket) {
-  let roomId: string | null = null;
+  let workSpaceId: string | null = null;
 
-  socket.on('JOIN', (data) => {
-    console.log(`JOIN : ${data.documentId}`);
-    if (!data.documentId) return;
-    roomId = data.documentId;
-    roomManager.joinRoom(data.documentId, data.userId, socket);
+  socket.on('CONNECT', (data) => {
+    console.log('CONNECT', data);
+    if (!data.workSpaceId) return;
+    workSpaceId = data.workSpaceId;
+    roomManager.joinRoom(data.workSpaceId, data.userId, socket);
   });
 
-  socket.on('SYNC', (data) => {
-    console.log(`SYNC : ${data.payload}`);
-    if (!roomId) return;
-    roomManager.broadcast(roomId, {
+  socket.on('SYNC', (data: { payload: string }) => {
+    console.log(`SYNC Socket : \n ${JSON.stringify(data)}`);
+    if (!workSpaceId) return;
+    roomManager.broadcast(workSpaceId, {
       type: 'UPDATE',
       payload: data.payload
     }, socket);
   });
 
   socket.on('SYNC_CURSOR', (data) => {
-    if (!roomId) return;
-    roomManager.broadcast(roomId, {
+    if (!workSpaceId) return;
+    roomManager.broadcast(workSpaceId, {
       type: 'CURSOR',
       userId: data.userId,
       line: data.line,
@@ -33,15 +33,15 @@ export function handleSocketConnection(socket: Socket) {
   })
 
   socket.on('LEAVE', (data) => {
-    console.log(`LEAVE : ${data.documentId}`);
-    if (!roomId || !data.documentId) return;
-    roomManager.leaveRoom(data.documentId, data.userId, socket);
+    console.log(`LEAVE : ${data.workSpaceId}`);
+    if (!workSpaceId || !data.workSpaceId) return;
+    roomManager.leaveRoom(data.workSpaceId, data.userId, socket);
   });
 
-  socket.on('disconnect', () => {
+  socket.on('DISCONNECT', () => {
     console.log('연결 종료됨');
-    if (roomId) {
-      roomManager.leaveRoom(roomId, socket.id, socket);
+    if (workSpaceId) {
+      roomManager.leaveRoom(workSpaceId, socket.id, socket);
     }
   });
 }
