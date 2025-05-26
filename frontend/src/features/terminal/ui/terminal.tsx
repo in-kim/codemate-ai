@@ -2,11 +2,18 @@
 
 import { useExecutionStore } from '@/shared/store/execution-store';
 import { formatDistance } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import { ko } from 'date-fns/locale/ko';
 import { useEffect, useRef } from 'react';
+import { useShallow } from 'zustand/shallow';
 
 export function Terminal() {
-  const { history, currentResult, isExecuting } = useExecutionStore();
+  const { history, currentResult, isExecuting } = useExecutionStore(
+    useShallow((state) => ({
+      history: state.history,
+      currentResult: state.currentResult,
+      isExecuting: state.isExecuting,
+    }))
+  );
   const selectExecution = useExecutionStore(state => state.selectExecution);
   const terminalRef = useRef<HTMLDivElement>(null);
 

@@ -12,6 +12,11 @@ export interface CreateWorkspaceModalProps {
   callbackCloseModal?: () => void;
 }
 
+/**
+ * 워크스페이스 생성 훅
+ * @param callbackSubmit 워크스페이스 생성 후 콜백 함수
+ * @param callbackCloseModal 모달 닫기 후 콜백 함수
+ */
 export function useCreateWorkspace({ callbackSubmit, callbackCloseModal }: CreateWorkspaceModalProps) {
   const { isCreateWorkspaceModalOpen, closeCreateWorkspaceModal } = useModalStore(
     useShallow((state) => ({ 
@@ -32,6 +37,10 @@ export function useCreateWorkspace({ callbackSubmit, callbackCloseModal }: Creat
     useShallow((state) => ({ startLoading: state.startLoading, stopLoading: state.stopLoading }))
   );
 
+  /**
+   * 워크스페이스 생성 핸들러
+   * @param workspaceName 생성할 워크스페이스 이름
+   */
   const handleCreateWorkspace = async (workspaceName: string) => {
     // 여기에 방 생성 로직 추가
     try {
@@ -52,6 +61,9 @@ export function useCreateWorkspace({ callbackSubmit, callbackCloseModal }: Creat
     }
   };
 
+  /**
+   * 모달 닫기 핸들러
+   */
   const handleModalClose = () => {
     if (callbackCloseModal) callbackCloseModal();
     else closeCreateWorkspaceModal();

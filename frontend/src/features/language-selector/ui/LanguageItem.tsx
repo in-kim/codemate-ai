@@ -1,9 +1,9 @@
 'use client';
 
-import { Language } from '@/shared/api/language';
+import { ILanguage } from '@/shared/lib/services/languages.service';
 
 interface LanguageItemProps {
-  language: Language;
+  language: ILanguage;
   isSelected: boolean;
   onSelect: (langId: string) => void;
 }

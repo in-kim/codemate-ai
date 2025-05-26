@@ -17,11 +17,11 @@ interface WorkspacePageProps {
 export default async function WorkspacePage({ params, searchParams }: WorkspacePageProps) {
   const { workspaceId } = await params;
   const { token } = await searchParams;
-  // 쿠키 설정
-  if (workspaceId) setCookie('workspaceId', workspaceId);
+  // 쿠키 설정 - 토큰만 저장하고 워크스페이스 ID는 URL에서 직접 사용
   if (token) setCookie('joinToken', token);
   
-  const result = await getWorkspaceData(getCookie('workspaceId') || workspaceId, getCookie('joinToken') || token);
+  // URL의 워크스페이스 ID를 우선적으로 사용
+  const result = await getWorkspaceData(workspaceId, getCookie('joinToken') || token);
 
   // 에러 처리
   switch (result.status) {

@@ -1,12 +1,12 @@
 'use client';
 
-import { Language } from '@/shared/api/language';
+import { ILanguage } from '@/shared/lib/services/languages.service';
 import { LanguageItem } from './LanguageItem';
 
 interface LanguageDropdownProps {
-  languages: Language[];
+  languages: ILanguage[];
   currentLanguageId: string;
-  isLoading: boolean;
+  isLoading: boolean; 
   onSelectLanguage: (langId: string) => void;
 }
 

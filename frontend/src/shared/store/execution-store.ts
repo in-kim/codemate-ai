@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 
-export interface ExecutionResult {
+export interface IExecutionResult {
   id: string;
   code: string;
   language: string;
@@ -11,26 +11,26 @@ export interface ExecutionResult {
   timestamp: number;
 }
 
-interface ExecutionState {
-  history: ExecutionResult[];
-  currentResult: ExecutionResult | null;
+export interface IExecutionState {
+  history: IExecutionResult[];
+  currentResult: IExecutionResult | null;
   isExecuting: boolean;
   
   // Actions
-  addExecution: (result: Omit<ExecutionResult, 'id' | 'timestamp'>) => void;
+  addExecution: (result: Omit<IExecutionResult, 'id' | 'timestamp'>) => void;
   selectExecution: (id: string) => void;
   clearHistory: () => void;
   setExecuting: (isExecuting: boolean) => void;
 }
 
-export const useExecutionStore = create<ExecutionState>()(
+export const useExecutionStore = create<IExecutionState>()(
   immer((set) => ({
     history: [],
     currentResult: null,
     isExecuting: false,
     
     addExecution: (result) => set((state) => {
-      const newExecution: ExecutionResult = {
+      const newExecution: IExecutionResult = {
         ...result,
         id: crypto.randomUUID(),
         timestamp: Date.now(),
