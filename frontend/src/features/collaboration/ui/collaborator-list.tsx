@@ -1,13 +1,9 @@
+'use client';
 import { cn } from '@/shared/lib/utils';
-
-export interface Collaborator {
-  id: string;
-  name: string;
-  status: 'online' | 'offline';
-}
+import { User } from '@/shared/types/user';
 
 export interface CollaboratorListProps {
-  collaborators: Collaborator[];
+  collaborators: User[];
 }
 
 export function CollaboratorList({ collaborators }: CollaboratorListProps) {
@@ -17,22 +13,22 @@ export function CollaboratorList({ collaborators }: CollaboratorListProps) {
         {collaborators.length > 0 ? (
           collaborators.map((collaborator) => (
             <div
-              key={collaborator.id}
+              key={collaborator.userId}
               className={cn(
                 'flex items-center justify-between p-3 rounded-md bg-[#252526] hover:bg-[#333]',
               )}
             >
-              <span className="text-sm">{collaborator.name}</span>
-              <span
+              <span className="text-sm">{collaborator.username}</span>
+              {/* <span
                 className={cn(
                   'w-2 h-2 rounded-full',
                   collaborator.status === 'online' ? 'bg-green-400' : 'bg-gray-500'
                 )}
-              />
+              /> */}
             </div>
           ))
         ) : (
-          <div className="text-sm text-gray-500">협업자가 없습니다.</div>
+          <div className="text-sm">협업자가 없습니다.</div>
         )}
       </div>
     </div>

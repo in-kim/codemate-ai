@@ -1,53 +1,22 @@
-'use client';
-import { CreateWorkspaceModal } from "@/features/workspace/ui/create-workspace-modal";
-import { useModalStore } from "@/shared/store/modal-store";
-import { useEffect } from "react";
-import { getJoinMyWorkspace, getJoinMyWorkspaceResponse } from "@/shared/lib/services/workspace.service";
-import { useToastStore } from "@/shared/store/toast-store";
-import { useShallow } from "zustand/shallow";
-import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/shared/store/auth-store";
+import OnboardingClient from "./client";
+import { getJoinMyWorkspace, IWorkspace } from "@/shared/lib/services/workspace.service";
+import { getMyInfo } from "@/shared/lib/services/auth.service";
 import { isHttpResponseSuccess } from "@/shared/lib/utils";
+import { redirect } from "next/navigation";
 
-export default function OnboardingPage() {
-  const { openCreateWorkspaceModal } = useModalStore();
-  const { addToast } = useToastStore(
-    useShallow((state) => ({ addToast: state.addToast }))
-  );
-  const { userInfo } = useAuthStore(
-    useShallow((state) => ({ userInfo: state.userInfo }))
-  );
-  const router = useRouter();
+export default async function OnboardingPage(): Promise<React.ReactNode> {
+  const userInfo = await getMyInfo();
+  let workspace = null;
 
-  const callbackSubmit = (workspaceInfo: getJoinMyWorkspaceResponse) => {
-    router.push(`/workspace/${workspaceInfo.workSpaceId}`)
+  if(isHttpResponseSuccess(userInfo)) {
+    workspace = await getJoinMyWorkspace(userInfo.data.userId);
   }
 
-  const callbackCloseModal = () => {
-    addToast("워크스페이스를 생성해주세요.", "default")
-  }
-
-  useEffect(() => {
-    if (!userInfo) {
-      openCreateWorkspaceModal();
-      return;
+  if(isHttpResponseSuccess(workspace)) {
+    const workspaceList = workspace.data as IWorkspace[];
+    if(workspaceList.length > 0) {
+      redirect(`/workspace/${workspaceList[0].workSpaceId}`)
     }
-    
-    const fetchWorkspace = async () => {
-      const workspace = await getJoinMyWorkspace(userInfo.userId);
-      
-      if(!workspace || !isHttpResponseSuccess(workspace) || workspace.data.length === 0) {
-        openCreateWorkspaceModal();
-        return;
-      }
-
-      const workspaceList = workspace.data as getJoinMyWorkspaceResponse[];
-      router.push(`/workspace/${workspaceList[0].workSpaceId}`);
-    };
-    
-    fetchWorkspace();
-  }, [openCreateWorkspaceModal, router, userInfo]);
-  
-
-  return <CreateWorkspaceModal callbackCloseModal={callbackCloseModal} callbackSubmit={callbackSubmit} />;
+  }
+  return <OnboardingClient userInfo={userInfo} />
 }

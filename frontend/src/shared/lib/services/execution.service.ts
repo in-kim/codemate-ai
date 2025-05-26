@@ -1,5 +1,7 @@
 // shared/api/execution.ts
+import { HttpResponse } from '@/shared/types/response';
 import { fetcher } from '../fetcher';
+import { handleApiError } from '../utils/utils';
 
 interface ExecutionResponse {
   stdout: string;
@@ -13,21 +15,16 @@ interface ExecutionResponse {
  * @param language 코드 언어 (python, javascript)
  * @returns 실행 결과
  */
-export async function executeCode(code: string, language: string): Promise<ExecutionResponse> {
+export async function executeCode(code: string, language: string): Promise<HttpResponse<ExecutionResponse>> {
   try {
     // 백엔드 API 호출
-    const response = await fetcher<ExecutionResponse>('/api/execute', {
+    const response = await fetcher<HttpResponse<ExecutionResponse>>('/api/execute', {
       method: 'POST',
       body: JSON.stringify({ code, language }),
     });
 
-    return response;
+    return response as HttpResponse<ExecutionResponse>;
   } catch (error) {
-    console.error('코드 실행 실패:', error);
-    return {
-      stdout: '',
-      stderr: error instanceof Error ? error.message : '코드 실행 중 오류가 발생했습니다.',
-      exitCode: 1,
-    };
+    handleApiError(error, '코드 실행 실패')
   }
 }

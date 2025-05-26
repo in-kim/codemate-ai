@@ -1,4 +1,5 @@
-import { getJoinMyWorkspaceResponse, leaveWorkspace } from '@/shared/lib/services/workspace.service';
+'use client';
+import { IWorkspace } from '@/shared/lib/services/workspace.service';
 import { cn } from '@/shared/lib/utils';
 import { IconButton } from '@/shared/ui/iconButon/iconButton';
 import useWorkspaceData from '../hooks/use-workspace-data';
@@ -12,16 +13,16 @@ export interface WorkspaceListProps {
   workspaces: Workspace[];
 }
 
-function WorkspaceDeleteButton({ workspace }: { workspace: getJoinMyWorkspaceResponse }) {
-  const { isLoading, handleDeleteWorkspace, userInfo } = useWorkspaceData();
+function WorkspaceDeleteButton({ workspace }: { workspace: IWorkspace }) {
+  const { isLoading, handleDeleteWorkspace, handleLeaveWorkspace, userInfo } = useWorkspaceData();
 
   return userInfo?.userId === workspace.owner ?(
     <IconButton onClick={() => handleDeleteWorkspace(workspace.workSpaceId, workspace.workSpaceName as string)} icon="trash" disabled={isLoading}/>
-  ) : <IconButton onClick={() => leaveWorkspace(workspace.workSpaceId)} icon="leave" disabled={isLoading}/>
+  ) : <IconButton onClick={() => handleLeaveWorkspace(workspace.workSpaceId, workspace.workSpaceName as string)} icon="leave" disabled={isLoading}/>
 }
 
 export function WorkspaceList() {
-  const { workspaces, selectedWorkspaceId, selectWorkspace } = useWorkspaceData();
+  const { workspaces, selectedWorkspaceId, handleSelectWorkspace } = useWorkspaceData();
 
   return (
     <div className="flex flex-col space-y-2 py-2 px-3">
@@ -30,10 +31,10 @@ export function WorkspaceList() {
           <div
             key={workspace.workSpaceId}
             className={cn(
-              'flex items-center justify-between p-3 rounded-md bg-[#252526] hover:bg-[#333]',
+              'flex items-center justify-between p-3 rounded-md hover:bg-[#333]',
               selectedWorkspaceId === workspace.workSpaceId ? 'bg-[#333]' : 'bg-[#252526]'
             )}
-            onClick={() => selectWorkspace(workspace.workSpaceId)}
+            onClick={() => handleSelectWorkspace(workspace.workSpaceId)}
           >
             <span className="text-sm">{workspace.workSpaceName}</span>
             <WorkspaceDeleteButton workspace={workspace} />

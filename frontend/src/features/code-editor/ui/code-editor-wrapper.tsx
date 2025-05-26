@@ -10,6 +10,7 @@ import { fetcher } from "@/shared/lib/fetcher";
 import { useSocket } from "@/shared/hooks/useSocket";
 import {useAuthStore} from "@/shared/store/auth-store";
 import { isHttpResponseSuccess } from "@/shared/lib/utils";
+import { useWorkspaceStore } from "@/shared/store/workspace-store";
 
 // 리뷰 API 응답 타입 정의
 interface ReviewResponsePart {
@@ -33,7 +34,8 @@ export function CodeEditorWrapper() {
   const { code, setCode, setCursorPosition, language, detectAndSetLanguage } = useEditorStore(
     useShallow((state) => ({ code: state.code, setCode: state.setCode, setCursorPosition: state.setCursorPosition, language: state.language, detectAndSetLanguage: state.detectAndSetLanguage }))
   );
-  const user = useAuthStore();
+  const user = useAuthStore(useShallow((state) => ({ userInfo: state.userInfo })));
+  const {selectedWorkspaceId} = useWorkspaceStore(useShallow((state) => ({ selectedWorkspaceId: state.selectedWorkspaceId })));
   /**
    * 커서 위치 변경 시 실행
    * @param line 줄
@@ -45,10 +47,12 @@ export function CodeEditorWrapper() {
 
   const [decorations, setDecorations] = useState<string[]>([]);
   const { sendSync } = useSocket({
-    documentId: user.userInfo?.userId || '',
-    userId: user.userInfo?.username || '',
+    workSpaceId: selectedWorkspaceId as string,
+    userId: user.userInfo?.username as string,
     onMessage: (data: unknown) => {
       const msg = data as { type: string, payload: string };
+
+      console.log('code Editor msg : ', msg)
       if (msg.type === 'UPDATE' && typeof msg.payload === 'string') {
         const editor = editorRef.current;
         if (!editor) return;
@@ -107,7 +111,7 @@ export function CodeEditorWrapper() {
   const handleCodeChange = (value: string) => {
     setCode(value);
     debouncedDetectAndSetLanguage(value);
-    sendSync(value);
+    sendSync({ payload: value });
   };
 
   /**

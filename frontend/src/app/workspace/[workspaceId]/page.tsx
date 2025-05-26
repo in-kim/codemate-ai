@@ -1,30 +1,45 @@
-import { getMyInfo } from "@/shared/lib/services/auth.service";
+// /app/workspace/[workspaceId]/page.tsx
 import Client from "./client";
-import { getJoinMyWorkspace, getJoinMyWorkspaceResponse } from "@/shared/lib/services/workspace.service";
-import { isHttpResponseSuccess } from "@/shared/lib/utils";
+import { getWorkspaceData } from "./actions";
 import { redirect } from "next/navigation";
+import { IStatus } from "@/shared/types/common";
+import { getCookie, setCookie } from "@/shared/lib/utils/utils";
 
 interface WorkspacePageProps {
   params: {
     workspaceId: string;
   }
+  searchParams: {
+    [key: string]: string | undefined
+  }
 }
-export default async function WorkspacePage({ params }: WorkspacePageProps) {
-  // 파라미터를 함수 시작 부분에서 추출
-  const workspaceId = params.workspaceId;
 
-  if (!workspaceId) redirect('/onboarding')
+export default async function WorkspacePage({ params, searchParams }: WorkspacePageProps) {
+  const { workspaceId } = await params;
+  const { token } = await searchParams;
+  // 쿠키 설정
+  if (workspaceId) setCookie('workspaceId', workspaceId);
+  if (token) setCookie('joinToken', token);
+  
+  const result = await getWorkspaceData(getCookie('workspaceId') || workspaceId, getCookie('joinToken') || token);
 
-  const userInfo = await getMyInfo();
-  
-  let workspaces:getJoinMyWorkspaceResponse[] = [];
-  
-  if(isHttpResponseSuccess(userInfo) && workspaceId) {
-    const responseWorkSpaceData = await getJoinMyWorkspace(userInfo.data.userId);
-    if(isHttpResponseSuccess(responseWorkSpaceData)) {
-      workspaces = responseWorkSpaceData.data as getJoinMyWorkspaceResponse[];
-    }
+  // 에러 처리
+  switch (result.status) {
+    case IStatus.NOT_FOUND:
+    case IStatus.UNAUTHORIZED:
+    case IStatus.FORBIDDEN:
+      redirect('/onboarding');
+      break;
+    case IStatus.ERROR:
+      throw new Error(result.message || '오류가 발생했습니다.');
   }
 
-  return (<Client workspaces={workspaces} selectedWorkspaceId={workspaceId} userInfo={userInfo?.data || null} />);
+  return (
+    <Client 
+      workspaces={result.workspaces || []} 
+      selectedWorkspaceId={result.workspaceId as string} 
+      userInfo={result.userInfo || null} 
+      isRedirect={result.isRedirect}
+    />
+  );
 }

@@ -1,20 +1,22 @@
-import { deleteWorkspace, getJoinMyWorkspace, getJoinMyWorkspaceResponse } from "@/shared/lib/services/workspace.service";
+import { deleteWorkspace, getJoinMyWorkspace, IWorkspace, leaveWorkspace } from "@/shared/lib/services/workspace.service";
 import { isHttpResponseSuccess } from "@/shared/lib/utils";
 import { useAuthStore } from "@/shared/store/auth-store";
 import { useLoadingStore } from "@/shared/store/loading-store";
 import { useToastStore } from "@/shared/store/toast-store";
 import { useWorkspaceStore } from "@/shared/store/workspace-store";
 import { User } from "@/shared/types/user";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useShallow } from "zustand/shallow";
 
 interface UseWorkspaceDataReturn {
-  workspaces: getJoinMyWorkspaceResponse[];
+  workspaces: IWorkspace[];
   selectedWorkspaceId: string | null;
-  selectWorkspace: (workspaceId: string) => void;
+  handleSelectWorkspace: (workspaceId: string) => void;
   error: Error | null;
   refetch: () => Promise<void>;
   handleDeleteWorkspace: (workspaceId: string, workspaceName: string) => Promise<void>;
+  handleLeaveWorkspace: (workspaceId: string, workspaceName: string) => Promise<void>;
   isLoading: boolean;
   userInfo: User | null;
 }
@@ -43,6 +45,8 @@ export default function useWorkspaceData(): UseWorkspaceDataReturn {
     }))
   );
 
+  const router = useRouter();
+
   const userId = userInfo?.userId;
 
   const fetchWorkspaces = async () => {
@@ -53,7 +57,8 @@ export default function useWorkspaceData(): UseWorkspaceDataReturn {
       const response = await getJoinMyWorkspace(userId as string);
       
       if (isHttpResponseSuccess(response)) {
-        addWorkspace(response.data as getJoinMyWorkspaceResponse[]);
+        addWorkspace(response.data as IWorkspace[]);
+        selectWorkspace(response.data[0].workSpaceId);
       } else {
         throw new Error(typeof response === 'string' ? response : '응답 형식이 올바르지 않습니다.');
       }
@@ -82,6 +87,29 @@ export default function useWorkspaceData(): UseWorkspaceDataReturn {
     }
   }
 
+  const handleLeaveWorkspace = async (workspaceId: string, workspaceName: string) => {
+    try {
+      startLoading();
+      const response = await leaveWorkspace(workspaceId, userInfo?.userId as string);
+
+      if(isHttpResponseSuccess(response)) {
+        addToast(`'${workspaceName}' 워크스페이스에서 퇴장하였습니다!`, 'success');
+        fetchWorkspaces();
+        return;
+      }
+      if (response !== null) addToast((response as Error).message, 'error');
+    } catch(err) {
+      console.error(err);
+    } finally {
+      stopLoading();
+    }
+  }
+
+  const handleSelectWorkspace = (workspaceId: string) => {
+    selectWorkspace(workspaceId);
+    router.replace(`/workspace/${workspaceId}`);
+  }
+
 
 
   useEffect(() => {
@@ -93,10 +121,11 @@ export default function useWorkspaceData(): UseWorkspaceDataReturn {
   return {
     workspaces,
     selectedWorkspaceId,
-    selectWorkspace,
+    handleSelectWorkspace,
     error,
     refetch: fetchWorkspaces,
     handleDeleteWorkspace,
+    handleLeaveWorkspace,
     isLoading,
     userInfo
   };

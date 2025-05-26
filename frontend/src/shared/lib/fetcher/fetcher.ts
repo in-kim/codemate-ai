@@ -1,5 +1,6 @@
 import { useAuthStore } from "@/shared/store/auth-store";
 import { useToastStore } from "@/shared/store/toast-store";
+import { logError } from "../utils/errorLogger";
 
 interface FetcherOptions extends RequestInit {
   skipAuth?: boolean; // (추후 인증 확장용, 지금은 사용 X)
@@ -54,16 +55,17 @@ export async function fetcher<TResponse>(url: string, options?: FetcherOptions):
         useToastStore.getState().addToast('로그인이 필요합니다.', 'error');
         useAuthStore.getState().clearUser();
       }
-      console.error('Unauthorized');
+
+      logError("Unauthorized");
     }
 
     const errorMessage = errorBody?.message || response.statusText || 'API Error';
-    return new Error(errorMessage);
+    throw new Error(errorMessage);
   }
 
   if (contentType?.includes('application/json')) {
     return (await response.json()) as TResponse;
   } else {
-    return new Error('Invalid response format. Expected JSON.');
+    throw new Error('Invalid response format. Expected JSON.');
   }
 }

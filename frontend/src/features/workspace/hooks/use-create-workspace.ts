@@ -1,14 +1,14 @@
 import { useModalStore } from "@/shared/store/modal-store";
 import { useToastStore } from "@/shared/store/toast-store";
 import { useShallow } from "zustand/react/shallow";
-import { createdWorkspace, getJoinMyWorkspaceResponse } from "@/shared/lib/services/workspace.service";
+import { createdWorkspace, IWorkspace } from "@/shared/lib/services/workspace.service";
 import useWorkspaceData from "./use-workspace-data";
 import { isHttpResponseSuccess } from "@/shared/lib/utils";
 import { useAuthStore } from "@/shared/store/auth-store";
 import { useLoadingStore } from "@/shared/store/loading-store";
 
 export interface CreateWorkspaceModalProps {
-  callbackSubmit?: (workspaceInfo: getJoinMyWorkspaceResponse) => void;
+  callbackSubmit?: (workspaceInfo: IWorkspace) => void;
   callbackCloseModal?: () => void;
 }
 
@@ -41,7 +41,7 @@ export function useCreateWorkspace({ callbackSubmit, callbackCloseModal }: Creat
       if(isHttpResponseSuccess(response)) {
         addToast(`'${workspaceName}' 워크스페이스가 생성되었습니다!`, 'success');
         refetchWorkspaceData(); // 재조회
-        if(callbackSubmit) callbackSubmit(response.data as getJoinMyWorkspaceResponse);
+        if(callbackSubmit) callbackSubmit(response.data as IWorkspace);
       }
     } catch (err) {
       console.error('워크스페이스 생성 실패:', err);

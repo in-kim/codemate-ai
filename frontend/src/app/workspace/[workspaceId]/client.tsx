@@ -17,8 +17,8 @@ const CodeEditorWrapper = dynamic(
 
 
 
-export default function WorkspaceClient({ workspaces, userInfo, selectedWorkspaceId }: ClientComponentProps) {
-  const { isLoading } = useWorkspace({ workspaces, userInfo, selectedWorkspaceId });
+export default function WorkspaceClient({ workspaces, userInfo, selectedWorkspaceId, isRedirect }: ClientComponentProps) {
+  const { isLoading } = useWorkspace({ workspaces, userInfo, selectedWorkspaceId, isRedirect});
 
   return (
     <>

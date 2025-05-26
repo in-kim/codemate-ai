@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastsWrapper } from "@/features/toasts/ui/toasts-wrapper";
-import LoginChecker from "@/features/auth/ui/LoginChecker";
+import LoginChecker from "@/widgets/auth/LoginChecker";
 import FullPageLoader from "@/features/fullpage-loader/ui/FullPageLoader";
 
 export const metadata: Metadata = {

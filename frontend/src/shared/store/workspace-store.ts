@@ -1,13 +1,15 @@
 import { create } from 'zustand';
 import { createJSONStorage, devtools, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
-import { getJoinMyWorkspaceResponse } from '../lib/services/workspace.service';
+import { IWorkspace } from '../lib/services/workspace.service';
+import { User } from '../types/user';
 
 export interface WorkspaceListProps {
-  workspaces: (getJoinMyWorkspaceResponse & { selected?: boolean })[];
+  workspaces: (IWorkspace & { selected?: boolean })[];
   selectedWorkspaceId: string | null;
-  addWorkspace: (workspaces: (getJoinMyWorkspaceResponse & { selected?: boolean })[]) => void;
+  addWorkspace: (workspaces: (IWorkspace & { selected?: boolean })[]) => void;
   selectWorkspace: (workspaceId: string) => void;
+  getParticipants: () => User[];
   isHydrated?: boolean;
 }
 
@@ -15,19 +17,19 @@ export const useWorkspaceStore = create<WorkspaceListProps>()(
   persist(
     devtools(
       immer(
-        (set) => ({
+        (set, get) => ({
           workspaces: [],
           selectedWorkspaceId: null,
-          addWorkspace: ( workspaces: (getJoinMyWorkspaceResponse & { selected?: boolean })[]) =>
+          addWorkspace: ( workspaces: (IWorkspace & { selected?: boolean })[]) =>
             set(() => ({
               workspaces: workspaces,
             })),
           selectWorkspace: (workspaceId: string) =>
-            set((state) => ({
-              workspaces: state.workspaces.map((workspace) =>
-                workspace.workSpaceId === workspaceId ? { ...workspace, selected: true } : { ...workspace, selected: false }
-              ),
+            set(() => ({
+              selectedWorkspaceId: workspaceId,
             })),
+          getParticipants: () =>
+            get().workspaces.find((workspace) => workspace.workSpaceId === get().selectedWorkspaceId)?.participants || [],
         }),
       )
     ),

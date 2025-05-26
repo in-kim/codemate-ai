@@ -1,14 +1,14 @@
 'use client';
 
 import { useEditorStore } from '@/shared/store/editor-store';
-import { Language, getLanguages } from '@/shared/api/language';
+import { ILanguage, getLanguages } from '@/shared/lib/services/languages.service';
 import { useEffect, useReducer, useCallback } from 'react';
 import { LanguageDropdown } from './LanguageDropdown';
 
 // 상태 타입 정의
 interface LanguageSelectorState {
-  languages: Language[];
-  currentLanguage: Language | null;
+  languages: ILanguage[];
+  currentLanguage: ILanguage | null;
   isOpen: boolean;
   isLoading: boolean;
   error: string | null;
@@ -17,7 +17,7 @@ interface LanguageSelectorState {
 // 액션 타입 정의
 type LanguageSelectorAction =
   | { type: 'FETCH_START' }
-  | { type: 'FETCH_SUCCESS'; payload: { languages: Language[]; currentLanguage: Language } }
+  | { type: 'FETCH_SUCCESS'; payload: { languages: ILanguage[]; currentLanguage: ILanguage } }
   | { type: 'FETCH_ERROR'; payload: string }
   | { type: 'TOGGLE_DROPDOWN' }
   | { type: 'CLOSE_DROPDOWN' };
@@ -67,7 +67,7 @@ export function LanguageSelector() {
     dispatch({ type: 'FETCH_START' });
     try {
       const languages = await getLanguages();
-      const currentLanguage = languages.find(lang => lang.id === language) || {
+      const currentLanguage = languages.data.find(lang => lang.id === language) || {
         id: language,
         name: language.charAt(0).toUpperCase() + language.slice(1),
         icon: '📄',
@@ -75,7 +75,7 @@ export function LanguageSelector() {
       };
       dispatch({
         type: 'FETCH_SUCCESS',
-        payload: { languages, currentLanguage }
+        payload: { languages: languages.data, currentLanguage }
       });
     } catch (error) {
       console.error('언어 목록 로딩 실패:', error);
