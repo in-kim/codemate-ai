@@ -2,6 +2,7 @@
 
 import { useEditorStore } from "@/shared/store/editor-store";
 import { CodeEditor } from "@/shared/ui/code-editor";
+import { useReviewStore } from "@/shared/store/review-store";
 import { useShallow } from "zustand/react/shallow";
 import { debounce } from "@/shared/lib/debounce";
 import * as monaco from 'monaco-editor';
@@ -15,6 +16,7 @@ import { executeCode, IExecutionResponse } from '@/shared/lib/services/execution
 import { useExecutionStore } from '@/shared/store/execution-store';
 import { useToastStore } from '@/shared/store/toast-store';
 import { HttpResponse } from '@/shared/types/response';
+import { useLoadingStore } from "@/shared/store/loading-store";
 
 // 리뷰 API 응답 타입 정의
 interface ReviewResponsePart {
@@ -50,9 +52,14 @@ export function CodeEditorWrapper() {
    */
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
   const [selectedText, setSelectedText] = useState<string>('');
-  const [isReviewLoading, setIsReviewLoading] = useState(false);
+  const {isLoading, startLoading, stopLoading} = useLoadingStore(
+    useShallow((state) => ({
+      isLoading: state.isLoading,
+      startLoading: state.startLoading,
+      stopLoading: state.stopLoading
+    }))
+  )
 
-  const [decorations, setDecorations] = useState<string[]>([]);
   const { sendSync } = useSocket({
     workSpaceId: selectedWorkspaceId as string,
     userId: user.userInfo?.username as string,
@@ -120,6 +127,10 @@ export function CodeEditorWrapper() {
     sendSync({ payload: value });
   };
 
+  // zustand 리뷰 스토어
+  const addReview = useReviewStore((state) => state.addReview);
+  // const [inlineOpenLine, setInlineOpenLine] = useState<number | null>(null);
+
   /**
    * 선택한 코드 리뷰 요청
    */
@@ -127,53 +138,40 @@ export function CodeEditorWrapper() {
     if (!selectedText) return;
 
     try {
-      setIsReviewLoading(true);
-      const response = await fetcher<ReviewResponse>('/api/review', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      startLoading();
+      const response = await fetcher<ReviewResponse>("/api/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: selectedText, language }),
       });
 
       if (isHttpResponseSuccess<ReviewResponseItem[]>(response)) {
         // 응답 파싱
+        const suggestions: { line: number; message: string }[] = [];
         for (const item of response.data) {
           for (const part of item?.content?.parts) {
             try {
               const text = JSON.parse(part?.text);
-              if (editorRef.current && text.suggestions && text.suggestions.length > 0) {
-                const model = editorRef.current.getModel();
-                if (model) {
-                  const newDecorations = text.suggestions.map((suggestion: { line: number; message: string }) => ({
-                    range: new monaco.Range(
-                      suggestion.line, 
-                      1, 
-                      suggestion.line, 
-                      1
-                    ),
-                    options: {
-                      isWholeLine: true,
-                      className: 'review-line-highlight',
-                      hoverMessage: {
-                        value: suggestion.message,
-                      },
-                    },
-                  }));
-                  const newDecorationIds = editorRef.current.deltaDecorations(decorations, newDecorations);
-                  setDecorations(newDecorationIds);
-                }
+              if (text.suggestions && text.suggestions.length > 0) {
+                suggestions.push(...text.suggestions);
               }
-  
-              setSelectedText('');
             } catch (error) {
-              console.error('리뷰 결과 파싱 오류:', error);
+              console.error("리뷰 결과 파싱 오류:", error);
             }
           }
         }
+        // zustand store에 리뷰 결과 저장
+        addReview({
+          code: selectedText,
+          language,
+          suggestions,
+        });
+        setSelectedText("");
       }
     } catch (error) {
-      console.error('리뷰 요청 실패:', error);
+      console.error("리뷰 요청 실패:", error);
     } finally {
-      setIsReviewLoading(false);
+      stopLoading();
     }
   };
 
@@ -205,7 +203,7 @@ export function CodeEditorWrapper() {
     
     try {
       setIsExecutingFetching(true);
-      const result:HttpResponse<IExecutionResponse> = await executeCode(code, language);
+      const result:HttpResponse<IExecutionResponse> = await executeCode(code, language, user.userInfo?.userId as string, selectedWorkspaceId as string);
       
       // 실행 결과 저장
       addExecution({
@@ -220,7 +218,7 @@ export function CodeEditorWrapper() {
     } finally {
       setIsExecutingFetching(false);
     }
-  }, [code, addToast, language, addExecution]);
+  }, [code, addToast, language, addExecution, selectedWorkspaceId, user]);
 
   // 이벤트 핸들러 등록 상태를 추적하기 위한 ref 사용
   const keyHandlerRef = useRef(false);
@@ -274,43 +272,45 @@ export function CodeEditorWrapper() {
   
 
   return (
-    <div className="relative w-full h-full">
-      <div className=""></div>
-      <div className="py-4">
-        <CodeEditor
-          value={code}
-          onChange={handleCodeChange}
-          onMount={handleEditorDidMount}
-          onCursorPositionChange={handleCursorPositionChange}
-          language={language}
-          height="calc(100vh - 80px)" // Header 높이 제외
-        >
-          <div className="absolute top-4 right-4 z-10 flex gap-2">
-            <button
-              onClick={handleExecuteCode}
-              disabled={isExecutingFetching}
-              className="px-2 py-1 bg-green-600 text-white rounded shadow hover:bg-[#76FF03] transition mr-2 text-xs"
-            >
-              {isExecutingFetching ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-white"></div>
-              ) : (
-                '▶ Run (⌘+S)'
-              )}
-            </button>
-            {selectedText && (
+    <div className="relative w-full h-full flex">
+      {/* 코드 에디터 영역 */}
+      <div className="flex-1 relative">
+        <div className="py-4">
+          <CodeEditor
+            value={code}
+            onChange={handleCodeChange}
+            onMount={handleEditorDidMount}
+            onCursorPositionChange={handleCursorPositionChange}
+            language={language}
+            height="calc(100vh - 80px)"
+          >
+            <div className="absolute top-4 right-4 z-10 flex gap-2">
               <button
-                onClick={handleRequestReview}
-                className="px-2 py-1 bg-blue-500 text-white rounded shadow hover:bg-blue-600 transition text-xs"
+                onClick={handleExecuteCode}
+                disabled={isExecutingFetching}
+                className="px-2 py-1 bg-green-600 text-white rounded shadow hover:bg-[#76FF03] transition mr-2 text-xs"
               >
-                {isReviewLoading ? (
+                {isExecutingFetching ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-white"></div>
                 ) : (
-                  '선택한 코드 리뷰 요청'
+                  "▶ Run (⌘+S)"
                 )}
               </button>
-            )}
-          </div>
-        </CodeEditor>
+              {selectedText && (
+                <button
+                  onClick={handleRequestReview}
+                  className="px-2 py-1 bg-blue-500 text-white rounded shadow hover:bg-blue-600 transition text-xs"
+                >
+                  {isLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-white"></div>
+                  ) : (
+                    "선택한 코드 리뷰 요청"
+                  )}
+                </button>
+              )}
+            </div>
+          </CodeEditor>
+        </div>
       </div>
     </div>
   );

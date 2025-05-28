@@ -6,7 +6,6 @@ import dynamic from 'next/dynamic';
 import { InviteFormModal } from '@/features/collaboration/ui/invite-form-modal';
 import { CreateWorkspaceModal } from '@/features/workspace/ui/create-workspace-modal';
 import LeftSection from '@/widgets/leftSection/ui/left-section';
-import { Loading } from '@/shared/ui/loading';
 import useWorkspace, { ClientComponentProps } from './hook/useWorkspace';
 
 // monaco-editor 서버 사이드 렌더링 문제 해결을 위한 동적 임포트
@@ -18,7 +17,7 @@ const CodeEditorWrapper = dynamic(
 
 
 export default function WorkspaceClient({ workspaces, userInfo, selectedWorkspaceId, isRedirect }: ClientComponentProps) {
-  const { isLoading } = useWorkspace({ workspaces, userInfo, selectedWorkspaceId, isRedirect});
+  useWorkspace({ workspaces, userInfo, selectedWorkspaceId, isRedirect});
 
   return (
     <>
@@ -40,7 +39,6 @@ export default function WorkspaceClient({ workspaces, userInfo, selectedWorkspac
           <CreateWorkspaceModal />
         </div>
       </div>
-      {isLoading && <Loading />}
     </>
   );
 }
