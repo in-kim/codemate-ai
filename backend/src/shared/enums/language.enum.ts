@@ -4,7 +4,10 @@
 export enum ProgrammingLanguage {
   PLAINTEXT = 'plaintext',
   JAVASCRIPT = 'javascript',
+  TYPESCRIPT = 'typescript',
   PYTHON = 'python',
+  JAVA = 'java',
+  GO = 'go',
 }
 
 /**
@@ -13,7 +16,10 @@ export enum ProgrammingLanguage {
 export const LanguageDisplayNames: Record<ProgrammingLanguage, string> = {
   [ProgrammingLanguage.PLAINTEXT]: 'Plain Text',
   [ProgrammingLanguage.JAVASCRIPT]: 'JavaScript',
+  [ProgrammingLanguage.TYPESCRIPT]: 'TypeScript',
   [ProgrammingLanguage.PYTHON]: 'Python',
+  [ProgrammingLanguage.JAVA]: 'Java',
+  [ProgrammingLanguage.GO]: 'Go',
 };
 
 /**
@@ -22,7 +28,10 @@ export const LanguageDisplayNames: Record<ProgrammingLanguage, string> = {
 export const LanguageIcons: Record<ProgrammingLanguage, string> = {
   [ProgrammingLanguage.PLAINTEXT]: '📄',
   [ProgrammingLanguage.JAVASCRIPT]: '🟨',
+  [ProgrammingLanguage.TYPESCRIPT]: '🟨',
   [ProgrammingLanguage.PYTHON]: '🐍',
+  [ProgrammingLanguage.JAVA]: '☕️',
+  [ProgrammingLanguage.GO]: '☕️',
 };
 
 /**
@@ -31,5 +40,8 @@ export const LanguageIcons: Record<ProgrammingLanguage, string> = {
 export const LanguageExtensions: Record<ProgrammingLanguage, string> = {
   [ProgrammingLanguage.PLAINTEXT]: 'txt',
   [ProgrammingLanguage.JAVASCRIPT]: 'js',
+  [ProgrammingLanguage.TYPESCRIPT]: 'ts',
   [ProgrammingLanguage.PYTHON]: 'py',
+  [ProgrammingLanguage.JAVA]: 'java',
+  [ProgrammingLanguage.GO]: 'go',
 };

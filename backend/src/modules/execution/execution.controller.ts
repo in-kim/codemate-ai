@@ -13,13 +13,31 @@ export class ExecutionController {
   @ApiBody({
     schema: {
       type: 'object',
-      properties: { language: { type: 'string' }, code: { type: 'string' } },
+      properties: {
+        language: { type: 'string' },
+        code: { type: 'string' },
+        userId: { type: 'string', description: '사용자 ID (선택)' },
+        workSpaceId: { type: 'string', description: '워크스페이스 ID (선택)' },
+      },
     },
   })
   @ApiResponse({ status: 200, description: '코드 실행 결과' })
-  runCode(@Body() body: { language: string; code: string }) {
+  runCode(
+    @Body()
+    body: {
+      language: string;
+      code: string;
+      userId?: string;
+      workSpaceId?: string;
+    },
+  ) {
     try {
-      return this.executionService.run(body.language, body.code);
+      return this.executionService.run(
+        body.language,
+        body.code,
+        body.userId,
+        body.workSpaceId,
+      );
     } catch (e) {
       console.error('❌ 코드 실행 중 오류 발생:', e);
       throw e;

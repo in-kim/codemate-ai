@@ -4,8 +4,6 @@ import { AppHttpException } from 'src/shared/exceptions/http.exception';
 import { ErrorCodes } from 'src/shared/exceptions/error-codes';
 import { getPrompt } from './prompts';
 import { VertexAiService } from '../vertex/vertex.service';
-import { ResponseHelper } from 'src/shared/utils/response.helper';
-import { GenerateContentCandidate } from '@google-cloud/vertexai';
 
 @Injectable()
 export class ReviewService {
@@ -14,13 +12,7 @@ export class ReviewService {
     private readonly vertex: VertexAiService,
   ) {}
 
-  async generateReview(
-    language: string,
-    code: string,
-  ): Promise<
-    | ReturnType<typeof ResponseHelper.success>
-    | ReturnType<typeof ResponseHelper.fail>
-  > {
+  async generateReview(language: string, code: string): Promise<any> {
     this.logger.log(`리뷰 생성 요청 - 언어: ${language}`, 'ReviewService');
 
     // 지원 언어 확인
@@ -39,9 +31,7 @@ export class ReviewService {
       const isGeneratedSuccess = feedbacks && feedbacks.length > 0;
 
       if (isGeneratedSuccess) {
-        return ResponseHelper.success<GenerateContentCandidate[]>(feedbacks);
-      } else {
-        return ResponseHelper.fail('Failed to generate review');
+        return feedbacks;
       }
     } catch (err) {
       this.logger.error('Vertex AI 호출 오류', err.stack, 'ReviewService');

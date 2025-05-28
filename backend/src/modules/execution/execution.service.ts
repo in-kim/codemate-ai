@@ -7,15 +7,28 @@ import { randomUUID } from 'crypto';
 import { LoggerService } from 'src/shared/logger/logger.service';
 import { AppHttpException } from 'src/shared/exceptions/http.exception';
 import { ErrorCodes } from 'src/shared/exceptions/error-codes';
-import { ProgrammingLanguage } from 'src/shared/enums/language.enum';
+import {
+  ProgrammingLanguage,
+  LanguageExtensions,
+} from 'src/shared/enums/language.enum';
+import { EventService } from 'src/shared/events/event.service';
+import { CodeExecutedEvent } from 'src/shared/events/code-executed.event';
 
 const asyncExec = promisify(exec);
 
 @Injectable()
 export class ExecutionService {
-  constructor(private readonly logger: LoggerService) {}
+  constructor(
+    private readonly logger: LoggerService,
+    private readonly eventService: EventService,
+  ) {}
 
-  async run(language: string, code: string): Promise<any> {
+  async run(
+    language: string,
+    code: string,
+    userId?: string,
+    workSpaceId?: string,
+  ): Promise<any> {
     this.logger.log(`실행 요청 - 언어: ${language}`, 'ExecutionService');
 
     try {
@@ -33,26 +46,53 @@ export class ExecutionService {
 
       const id = randomUUID();
       const programmingLanguage = language as ProgrammingLanguage;
-      const fileName =
-        programmingLanguage === ProgrammingLanguage.PYTHON
-          ? `${id}.py`
-          : `${id}.js`;
+
+      // 언어별 Docker 이미지 및 실행 명령 정의
+      let image = '';
+      let execCmd = '';
+
+      switch (programmingLanguage) {
+        case ProgrammingLanguage.PYTHON:
+          image = 'python:3.12-slim-bookworm';
+          execCmd = `python /app/${id}.py`;
+          break;
+        case ProgrammingLanguage.JAVASCRIPT:
+          image = 'node:18';
+          execCmd = `node /app/${id}.js`;
+          break;
+        case ProgrammingLanguage.TYPESCRIPT:
+          image = 'node:18';
+          // TypeScript는 먼저 컴파일 후 실행
+          execCmd = `npx -y typescript@latest --outFile /app/${id}.js /app/${id}.ts && node /app/${id}.js`;
+          break;
+        case ProgrammingLanguage.JAVA:
+          image = 'openjdk:17-slim';
+          // Java 파일 이름은 Main.java로 고정
+          execCmd = `echo "${code}" > /app/${id}.java && javac /app/${id}.java && java -cp /app ${id}`;
+          break;
+        case ProgrammingLanguage.GO:
+          image = 'golang:1.20-alpine';
+          execCmd = `echo "${code}" > /app/${id}.go && go run /app/${id}.go`;
+          break;
+        case ProgrammingLanguage.PLAINTEXT:
+          image = 'alpine:latest';
+          execCmd = `echo "일반 텍스트는 코드로 실행할 수 없습니다."`;
+          break;
+        default:
+          throw new AppHttpException(
+            ErrorCodes.UNSUPPORTED_LANGUAGE,
+            HttpStatus.BAD_REQUEST,
+          );
+      }
+
+      // 파일 이름 생성 로직 수정
+      const fileExtension = LanguageExtensions[programmingLanguage];
+      const fileName = `${id}.${fileExtension}`;
       const filePath = path.join('/tmp', fileName);
 
       // 코드를 파일에 저장
       await fs.writeFile(filePath, code);
       this.logger.log(`파일 저장 완료: ${filePath}`, 'ExecutionService');
-
-      // 언어별 Docker 이미지 및 실행 명령 정의
-      let image = '';
-      let execCmd = '';
-      if (programmingLanguage === ProgrammingLanguage.PYTHON) {
-        image = 'python:3.12-slim-bookworm';
-        execCmd = `python /app/${fileName}`; // 컨테이너 내에서 실행할 명령
-      } else if (programmingLanguage === ProgrammingLanguage.JAVASCRIPT) {
-        image = 'node:18';
-        execCmd = `node /app/${fileName}`;
-      }
 
       // Docker 실행 명령어 조립
       const dockerCommand = [
@@ -70,7 +110,7 @@ export class ExecutionService {
 
       try {
         const { stdout, stderr } = await asyncExec(dockerCommand, {
-          timeout: 5000,
+          timeout: 10000,
         });
 
         this.logger.log(
@@ -78,7 +118,27 @@ export class ExecutionService {
           'ExecutionService',
         );
 
-        return { stdout, stderr, exitCode: 0 };
+        const result = { stdout, stderr, exitCode: 0 };
+
+        // 코드 실행 이벤트 발생 (userId와 workSpaceId가 제공된 경우에만)
+        if (userId && workSpaceId) {
+          this.eventService.emit('code.executed', {
+            _id: id,
+            userId,
+            workSpaceId,
+            code,
+            language,
+            result,
+            timestamp: new Date(),
+          } as CodeExecutedEvent);
+
+          this.logger.log(
+            `코드 실행 이벤트 발생 - 워크스페이스: ${workSpaceId}`,
+            'ExecutionService',
+          );
+        }
+
+        return result;
       } catch (err: any) {
         this.logger.error(
           `도커 실행 오류: ${err.message} \n ${err.stderr}`,
