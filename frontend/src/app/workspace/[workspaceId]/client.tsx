@@ -1,7 +1,7 @@
 'use client';
 
 import { Layout } from '@/shared/ui/layout';
-import { ReviewForm } from '@/shared/ui/review-form';
+import { ReviewForm } from '@/features/review-form';
 import dynamic from 'next/dynamic';
 import { InviteFormModal } from '@/features/collaboration/ui/invite-form-modal';
 import { CreateWorkspaceModal } from '@/features/workspace/ui/create-workspace-modal';

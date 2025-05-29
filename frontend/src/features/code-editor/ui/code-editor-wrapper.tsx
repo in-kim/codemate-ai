@@ -17,6 +17,7 @@ import { useExecutionStore } from '@/shared/store/execution-store';
 import { useToastStore } from '@/shared/store/toast-store';
 import { HttpResponse } from '@/shared/types/response';
 import { useLoadingStore } from "@/shared/store/loading-store";
+import { useSideSectionStore } from "@/shared/store/side-section-store";
 
 // 리뷰 API 응답 타입 정의
 interface ReviewResponsePart {
@@ -45,6 +46,12 @@ export function CodeEditorWrapper() {
   const { addExecution } = useExecutionStore();
   const { addToast } = useToastStore(useShallow((state) => ({ addToast: state.addToast })));
   const [isExecutingFetching, setIsExecutingFetching] = useState(false);
+  const { rightSectionVisible, toggleRightSection } = useSideSectionStore(
+    useShallow((state) => ({
+      rightSectionVisible: state.rightSectionVisible,
+      toggleRightSection: state.toggleRightSection
+    }))
+  );
   /**
    * 커서 위치 변경 시 실행
    * @param line 줄
@@ -146,15 +153,25 @@ export function CodeEditorWrapper() {
       });
 
       if (isHttpResponseSuccess<ReviewResponseItem[]>(response)) {
+        // 우측 섹션 닫혀있으면 열기
+        if(!rightSectionVisible) toggleRightSection()
         // 응답 파싱
         const suggestions: { line: number; message: string }[] = [];
+        let summary = '';
         for (const item of response.data) {
           for (const part of item?.content?.parts) {
             try {
-              const text = JSON.parse(part?.text);
+              // markdown to json 
+              const jsonRegex = /```json\s*([\s\S]*?)\s*```/;
+              const match = part?.text.match(jsonRegex);
+
+              console.log('match : ', match)
+
+              const text = JSON.parse(match?.[1].trim() || '');
               if (text.suggestions && text.suggestions.length > 0) {
                 suggestions.push(...text.suggestions);
               }
+              summary = text.summary;
             } catch (error) {
               console.error("리뷰 결과 파싱 오류:", error);
             }
@@ -165,6 +182,7 @@ export function CodeEditorWrapper() {
           code: selectedText,
           language,
           suggestions,
+          summary
         });
         setSelectedText("");
       }

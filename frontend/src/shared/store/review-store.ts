@@ -11,6 +11,7 @@ export interface ReviewHistoryItem {
   code: string;
   language: string;
   suggestions: ReviewSuggestion[];
+  summary: string;
 }
 
 interface ReviewStore {

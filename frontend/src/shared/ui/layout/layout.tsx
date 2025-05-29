@@ -27,12 +27,12 @@ export function Layout({ leftSection, mainSection, rightSection }: LayoutProps) 
         </SideSection>
 
         {/* Code mainSection */}
-        <main className="w-full h-full overflow-y-auto">
+        <main className="flex-1 h-full overflow-y-auto">
           {mainSection}
         </main>
 
         {/* Review */}
-        <SideSection position="right" initialVisible={false} width={350}>
+        <SideSection position="right" initialVisible={true} width={350}>
           <aside className="w-full h-full border-l border-[#333] p-4 overflow-y-auto bg-[#252526]">
             {rightSection}
           </aside>
