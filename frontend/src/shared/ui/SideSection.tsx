@@ -1,6 +1,8 @@
 'use client';
-import { ReactNode, useState, useEffect, useCallback } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useSideSectionStore } from '@/shared/store/side-section-store';
+import { useShallow } from 'zustand/shallow';
 
 interface SideSectionProps {
   children: ReactNode;
@@ -15,11 +17,35 @@ export const SideSection = ({
   initialVisible = true,
   width = 250,
 }: SideSectionProps) => {
-  const [isVisible, setIsVisible] = useState(initialVisible);
-
-  const toggleVisibility = useCallback(() => {
-    setIsVisible(prev => !prev);
-  }, []);
+  const { 
+    leftSectionVisible, 
+    rightSectionVisible, 
+    toggleLeftSection, 
+    toggleRightSection,
+    setLeftSectionVisible,
+    setRightSectionVisible
+  } = useSideSectionStore(
+    useShallow((state) => ({
+      leftSectionVisible: state.leftSectionVisible,
+      rightSectionVisible: state.rightSectionVisible,
+      toggleLeftSection: state.toggleLeftSection,
+      toggleRightSection: state.toggleRightSection,
+      setLeftSectionVisible: state.setLeftSectionVisible,
+      setRightSectionVisible: state.setRightSectionVisible
+    }))
+  );
+  
+  const isVisible = position === 'left' ? leftSectionVisible : rightSectionVisible;
+  const toggleVisibility = position === 'left' ? toggleLeftSection : toggleRightSection;
+  
+  // 초기 상태 설정
+  useEffect(() => {
+    if (position === 'left') {
+      setLeftSectionVisible(initialVisible);
+    } else {
+      setRightSectionVisible(initialVisible);
+    }
+  }, [initialVisible, position, setLeftSectionVisible, setRightSectionVisible]);
   
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -59,7 +85,7 @@ export const SideSection = ({
     <div className="relative h-full">
       <motion.div
         className="h-full overflow-hidden"
-        initial={initialVisible ? 'visible' : 'hidden'}
+        initial={isVisible ? 'visible' : 'hidden'}
         animate={isVisible ? 'visible' : 'hidden'}
         variants={variants}
       >

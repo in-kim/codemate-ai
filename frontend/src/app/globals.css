@@ -49,22 +49,11 @@ body {
   z-index: 10;
 }
 
-@keyframes typing {
-  from {
-    width: 0;
-  }
-  to {
-    width: 22ch;
-  }
-}
-
-@keyframes erase {
-  from {
-    width: 22ch;
-  }
-  to {
-    width: 0;
-  }
+@keyframes typing-erasing {
+  0% { width: 0; }
+  30% { width: 22ch; }  /* 타이핑 완료 (0-30%) */
+  70% { width: 22ch; }  /* 잠시 대기 (30-70%) */
+  100% { width: 0; }    /* 지우기 완료 (70-100%) */
 }
 
 @keyframes blink {
@@ -76,6 +65,6 @@ body {
   display: inline-block;
   white-space: nowrap;
   overflow: hidden;
-  animation: typing 3s steps(22), erase 3s steps(22) 3.5s;
-  animation-iteration-count: infinite;
+  width: 0;
+  animation: typing-erasing 8s steps(22, end) infinite;
 }

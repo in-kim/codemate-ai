@@ -2,7 +2,7 @@
 import {create} from 'zustand'
 
 // 로딩 상태의 최소 표시 시간 (밀리초)
-const MIN_LOADING_DURATION = 1000
+const MIN_LOADING_DURATION = 2000
 
 interface LoadingStore {
   loadingCount: number

@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const CodeReviewSchema = new mongoose.Schema(
+export const CodeReviewSchema = new mongoose.Schema(
   {
     codeId: {
       type: mongoose.Schema.Types.ObjectId,

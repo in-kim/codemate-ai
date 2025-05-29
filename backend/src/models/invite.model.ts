@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const InviteSchema = new mongoose.Schema(
+export const InviteSchema = new mongoose.Schema(
   {
     codeId: {
       type: mongoose.Schema.Types.ObjectId,

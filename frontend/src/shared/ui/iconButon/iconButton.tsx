@@ -1,5 +1,5 @@
 import { cn } from "@/shared/lib/utils";
-import { PlusIcon, UserPlusIcon, FolderPlusIcon, TrashIcon, ArrowRightStartOnRectangleIcon} from "@heroicons/react/24/outline";
+import { PlusIcon, UserPlusIcon, FolderPlusIcon, TrashIcon, ArrowRightStartOnRectangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
 export interface IconButtonProps {
     icon: string;
     onClick?: () => void;
@@ -19,6 +19,8 @@ function getIcon(icon: string, size: string = 'size-4', color: string = 'text-wh
           return <TrashIcon className={cn(size, color)}/>
         case 'leave':
           return <ArrowRightStartOnRectangleIcon className={cn(size, color)} />
+        case 'cancle':
+          return <XMarkIcon className={cn(size, color)} />
         default:
           return null;
     }

@@ -19,7 +19,7 @@ export class VertexAiService {
     });
 
     const generativeModel = vertexAI.getGenerativeModel({
-      model: 'gemini-1.5-flash-001',
+      model: 'gemini-2.0-flash-001',
     });
 
     try {

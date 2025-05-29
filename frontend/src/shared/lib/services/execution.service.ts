@@ -15,12 +15,12 @@ export interface IExecutionResponse {
  * @param language 코드 언어 (python, javascript)
  * @returns 실행 결과
  */
-export async function executeCode(code: string, language: string): Promise<HttpResponse<IExecutionResponse>> {
+export async function executeCode(code: string, language: string, userId: string, workSpaceId: string): Promise<HttpResponse<IExecutionResponse>> {
   try {
     // 백엔드 API 호출
     const response = await fetcher<HttpResponse<IExecutionResponse>>('/api/execute', {
       method: 'POST',
-      body: JSON.stringify({ code, language }),
+      body: JSON.stringify({ code, language, userId, workSpaceId }),
     });
 
     return response as HttpResponse<IExecutionResponse>;

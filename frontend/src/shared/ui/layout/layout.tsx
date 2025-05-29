@@ -27,7 +27,7 @@ export function Layout({ leftSection, mainSection, rightSection }: LayoutProps) 
         </SideSection>
 
         {/* Code mainSection */}
-        <main className="w-full h-full overflow-y-auto">
+        <main className="flex-1 h-full overflow-y-auto">
           {mainSection}
         </main>
 

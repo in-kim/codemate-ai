@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const CodeHistorySchema = new mongoose.Schema(
+export const CodeHistorySchema = new mongoose.Schema(
   {
     codeId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -12,12 +12,17 @@ const CodeHistorySchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
-    worSpaceId: { type: String, required: true },
+    workSpaceId: { type: String, required: true },
     code: { type: String, required: true },
   },
   {
-    timestamps: false,
+    timestamps: true, // createdAt, updatedAt 자동 생성
   },
 );
+
+// 특정 코드 ID에 대한 최신 히스토리를 가져오는 정적 메서드
+CodeHistorySchema.statics.getLatestByCodeId = function (codeId) {
+  return this.findOne({ codeId }).sort({ createdAt: -1 }).exec();
+};
 
 export const CodeHistory = mongoose.model('CodeHistory', CodeHistorySchema);

@@ -6,6 +6,9 @@ import { User } from "@/shared/types/user";
 import { useRouter } from "next/navigation";
 import { useLoadingStore } from "@/shared/store/loading-store";
 import { useShallow } from "zustand/shallow";
+import { getCode } from "@/shared/lib/services/code.service";
+import { useEditorStore } from "@/shared/store/editor-store";
+import { isHttpResponseSuccess } from "@/shared/lib/utils";
 
 export interface ClientComponentProps {
   workspaces: IWorkspace[];
@@ -35,8 +38,28 @@ export default function useWorkspace({ workspaces, selectedWorkspaceId, userInfo
     }))
   );
 
+  const { setCode, setLanguage } = useEditorStore(
+    useShallow((state) => ({
+      setCode: state.setCode,
+      setLanguage: state.setLanguage
+    }))
+  )
+
   const getCodeInfo = async () => {
-    
+    try {
+      startLoading();
+      const response = await getCode(selectedWorkspaceId);
+
+      if(isHttpResponseSuccess(response)) {
+        console.log('code', response)
+        setCode(response.data.content) 
+        setLanguage(response.data.language)
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      stopLoading();
+    }
   }
 
   const getReviewHistory = async () => {

@@ -10,7 +10,7 @@ interface FetcherOptions extends RequestInit {
  * 서버 API 응답 타입은 반드시 명시한다.
  * @param url - 요청 URL
  * @param options - fetch options
- * @returns 응답 데이터 (타입 안전)
+ * @returns 응답 데이터 
  */
 export async function fetcher<TResponse>(url: string, options?: FetcherOptions): Promise<TResponse | Error> {
   const isServer = typeof window === 'undefined';
@@ -57,6 +57,13 @@ export async function fetcher<TResponse>(url: string, options?: FetcherOptions):
       }
 
       logError("Unauthorized");
+
+      // 401은 에러바운더리에 걸리지 않게 하기 위해 에러로 응답
+      return {
+        message: 'Unauthorized',
+        status: 'fail',
+        data: null
+      } as TResponse;
     }
 
     const errorMessage = errorBody?.message || response.statusText || 'API Error';
