@@ -35,8 +35,8 @@ export function CodeEditor({
     if (ref) {
       ref.current = editor;
     }
-    editor.onDidChangeCursorPosition((e) => {
-      onCursorPositionChange?.(e.position.lineNumber, e.position.column);
+    editor.onDidChangeCursorSelection((e) => {
+      onCursorPositionChange?.(e.selection.positionLineNumber, e.selection.positionColumn);
     });
 
     onMount?.(editor);
