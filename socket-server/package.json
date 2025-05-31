@@ -6,12 +6,16 @@
   "scripts": {
     "build": "tsc",
     "start": "node index.js",
-    "dev": "npm run build && npm start"
+    "start:dev": "NODE_ENV=development node index.js",
+    "start:prod": "NODE_ENV=production node index.js",
+    "dev": "npm run build && npm run start:dev",
+    "prod": "npm run build && npm run start:prod"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "socket.io": "^4.8.1"
   },

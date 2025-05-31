@@ -5,18 +5,19 @@ import { redirect } from "next/navigation";
 import { IStatus } from "@/shared/types/common";
 import { getCookie, setCookie } from "@/shared/lib/utils/utils";
 
-interface WorkspacePageProps {
-  params: {
-    workspaceId: string;
-  }
-  searchParams: {
-    [key: string]: string | undefined
-  }
+interface IWorkspacePageProps {
+  params: Promise<{ workspaceId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function WorkspacePage({ params, searchParams }: WorkspacePageProps) {
+export default async function WorkspacePage({
+  params,
+  searchParams,
+}: IWorkspacePageProps): Promise<React.ReactNode> {
+  // params와 searchParams 모두 Promise이므로 await로 값을 가져옴
   const { workspaceId } = await params;
-  const { token } = await searchParams;
+  const resolvedSearchParams = await searchParams;
+  const token = resolvedSearchParams.token as string | undefined;
   // 쿠키 설정 - 토큰만 저장하고 워크스페이스 ID는 URL에서 직접 사용
   if (token) setCookie('joinToken', token);
   
