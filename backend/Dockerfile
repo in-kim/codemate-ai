@@ -1,6 +1,4 @@
 FROM node:24-alpine
-# Docker CLI 설치
-RUN apt-get update && apt-get install -y docker.io
 
 WORKDIR /app
 
