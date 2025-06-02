@@ -3,6 +3,8 @@ name: Deploy to GCP
 on:
   push:
     branches: [release]
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'  # 여기가 태그 규칙을 설정하는 부분
 
 jobs:
   deploy:
