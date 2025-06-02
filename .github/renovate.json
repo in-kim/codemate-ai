@@ -1,9 +1,13 @@
 {
-  "extends": ["config:base"],
+  "extends": [
+    "config:recommended"
+  ],
   "packageRules": [
     {
-      "matchPackagePatterns": [".*"],
-      "groupName": "all dependencies"
+      "groupName": "all dependencies",
+      "matchPackageNames": [
+        "/.*/"
+      ]
     }
   ],
   "lockFileMaintenance": {
