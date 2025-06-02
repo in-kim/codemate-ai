@@ -3,6 +3,8 @@ name: Deploy to GCP
 on:
   push:
     branches: [release]
+  pull_request:
+    branches: [release]
 
 jobs:
   deploy:
