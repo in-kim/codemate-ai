@@ -3,6 +3,7 @@ name: Deploy to GCP
 on:
   push:
     branches: [release]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -10,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-	    # GitHub Actions 러너가 코드 클ㄹ론
+	    # GitHub Actions 러너가 코드 클론
       - name: Checkout code
         uses: actions/checkout@v3
 			# Actions가 GCP로 코드 복사 (SCP)
@@ -34,5 +35,5 @@ jobs:
           key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
           script: |
             cd /home/${{ secrets.GCP_USER }}/app
-            docker compose down
+            docker compose down --remove-orphans
             docker compose up -d --build
