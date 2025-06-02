@@ -1,0 +1,12 @@
+{
+  "extends": ["config:base"],
+  "packageRules": [
+    {
+      "matchPackagePatterns": [".*"],
+      "groupName": "all dependencies"
+    }
+  ],
+  "lockFileMaintenance": {
+    "enabled": true
+  }
+}
