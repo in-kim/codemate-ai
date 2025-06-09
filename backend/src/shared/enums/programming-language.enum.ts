@@ -1,0 +1,42 @@
+export enum ProgrammingLanguage {
+  JAVASCRIPT = 'javascript',
+  PYTHON = 'python',
+  JAVA = 'java',
+  C = 'c',
+  CPP = 'c++',
+  CSHARP = 'c#',
+  GO = 'go',
+  RUBY = 'ruby',
+  PHP = 'php',
+  SWIFT = 'swift',
+  KOTLIN = 'kotlin',
+  TYPESCRIPT = 'typescript',
+  RUST = 'rust',
+  SCALA = 'scala',
+  HASKELL = 'haskell',
+  ERLANG = 'erlang',
+  ELIXIR = 'elixir',
+  OCAML = 'ocaml',
+  PROLOG = 'prolog',
+  LISP = 'lisp',
+  SCHEME = 'scheme',
+  FORTH = 'forth',
+  BRAINFUCK = 'brainfuck',
+  COBOL = 'cobol',
+  FORTRAN = 'fortran',
+  ADA = 'ada',
+  BASIC = 'basic',
+  PASCAL = 'pascal',
+  DELPHI = 'delphi',
+  VISUALBASIC = 'visualbasic',
+  PERL = 'perl',
+  TCL = 'tcl',
+  SQL = 'sql',
+  HTML = 'html',
+  CSS = 'css',
+}
+
+// 지원되는 언어 목록을 배열로 가져오는 헬퍼 함수
+export const getSupportedLanguages = (): string[] => {
+  return Object.values(ProgrammingLanguage);
+};

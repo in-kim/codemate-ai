@@ -1,5 +1,13 @@
 import mongoose from 'mongoose';
 
+export interface ICodeReview {
+  _id: string;
+  codeId: string;
+  userId: string;
+  summary: string;
+  suggestions?: { line: number; type: string; message: string }[];
+}
+
 export const CodeReviewSchema = new mongoose.Schema(
   {
     codeId: {
