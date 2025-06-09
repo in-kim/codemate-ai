@@ -7,35 +7,16 @@ import { useShallow } from "zustand/react/shallow";
 import { debounce } from "@/shared/lib/debounce";
 import * as monaco from 'monaco-editor';
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fetcher } from "@/shared/lib/fetcher";
 import { useSocket } from "@/shared/hooks/useSocket";
 import {useAuthStore} from "@/shared/store/auth-store";
 import { isHttpResponseSuccess } from "@/shared/lib/utils";
 import { useWorkspaceStore } from "@/shared/store/workspace-store";
-import { executeCode, IExecutionResponse } from '@/shared/lib/services/execution.service';
 import { useExecutionStore } from '@/shared/store/execution-store';
 import { useToastStore } from '@/shared/store/toast-store';
-import { HttpResponse } from '@/shared/types/response';
 import { useLoadingStore } from "@/shared/store/loading-store";
 import { useSideSectionStore } from "@/shared/store/side-section-store";
-
-// 리뷰 API 응답 타입 정의
-interface ReviewResponsePart {
-  text: string;
-}
-
-interface ReviewContentPart {
-  parts: ReviewResponsePart[];
-}
-
-interface ReviewResponseItem {
-  content: ReviewContentPart;
-}
-
-interface ReviewResponse {
-  data: ReviewResponseItem[];
-}
-
+import { IReviewResponseItem, TExecutionResponse } from "@/shared/types/code";
+import { executeCode, requestReview } from "@/shared/lib/services/code.service";
 
 export function CodeEditorWrapper() {
   const { code, setCode, codeId, setCursorPosition, language, detectAndSetLanguage } = useEditorStore(
@@ -146,43 +127,18 @@ export function CodeEditorWrapper() {
 
     try {
       startLoading();
-      const response = await fetcher<ReviewResponse>("/api/review", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: selectedText, language }),
-      });
+      const response = await requestReview(selectedText, language, user.userInfo?.userId as string, codeId.toString());
 
-      if (isHttpResponseSuccess<ReviewResponseItem[]>(response)) {
+      if (isHttpResponseSuccess<IReviewResponseItem[]>(response)) {
         // 우측 섹션 닫혀있으면 열기
         if(!rightSectionVisible) toggleRightSection()
-        // 응답 파싱
-        const suggestions: { line: number; message: string }[] = [];
-        let summary = '';
-        for (const item of response.data) {
-          for (const part of item?.content?.parts) {
-            try {
-              // markdown to json 
-              const jsonRegex = /```json\s*([\s\S]*?)\s*```/;
-              const match = part?.text.match(jsonRegex);
-
-              console.log('match : ', match)
-
-              const text = JSON.parse(match?.[1].trim() || '');
-              if (text.suggestions && text.suggestions.length > 0) {
-                suggestions.push(...text.suggestions);
-              }
-              summary = text.summary;
-            } catch (error) {
-              console.error("리뷰 결과 파싱 오류:", error);
-            }
-          }
-        }
+        console.log('response : ', response)
         // zustand store에 리뷰 결과 저장
         addReview({
           code: selectedText,
           language,
-          suggestions,
-          summary
+          suggestions: response.data.suggestions,
+          summary: response.data.summary
         });
         setSelectedText("");
       }
@@ -223,9 +179,9 @@ export function CodeEditorWrapper() {
     
     try {
       setIsExecutingFetching(true);
-      const result:HttpResponse<IExecutionResponse> = await executeCode(code, language, user.userInfo?.userId as string, selectedWorkspaceId as string);
+      const result = await executeCode(code, language, user.userInfo?.userId as string, selectedWorkspaceId as string);
 
-      if(isHttpResponseSuccess<IExecutionResponse>(result)) {
+      if(isHttpResponseSuccess<TExecutionResponse>(result)) {
         addExecution({
           codeId: codeId.toString(),
           workSpaceId: selectedWorkspaceId as string,

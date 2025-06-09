@@ -18,6 +18,27 @@ export interface IGetExecuteHistoryData extends Pick<IGetCodeData, '_id' | 'user
   code: string;
 }
 
+export interface IReviewResponse {
+  codeId: string;
+  suggestions: IReviewResponseItem[];
+  summary: string;
+  userId: string;
+  _id: string;
+}
+
+export interface IReviewResponseItem {
+  line: number;
+  type: string;
+  message: string;
+}
+
+export interface IExecutionResponseItem {
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+}
 
 export type TCodeResponse = HttpResponse<IGetCodeData>
 export type TExecuteHistoryResponse = HttpResponse<IGetExecuteHistoryData[]>
+export type TReviewResponse = HttpResponse<IReviewResponse>
+export type TExecutionResponse = HttpResponse<IExecutionResponseItem>
