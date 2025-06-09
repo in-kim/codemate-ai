@@ -2,6 +2,7 @@ import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/shared/decorators/public.decorator';
 import { CodeService } from './code.service';
+import { ICodeHistory } from 'src/models/code-history.model';
 
 @Public()
 @ApiTags('Code')
@@ -137,7 +138,7 @@ export class CodeController {
   async getCodeHistory(
     @Param('codeId') codeId: string,
     @Query('limit') limit?: number,
-  ) {
+  ): Promise<ICodeHistory[]> {
     return await this.codeService.getCodeHistory(codeId, limit);
   }
 

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { ICodeHistory } from 'src/models/code-history.model';
 import { ICode } from 'src/models/code.model';
 
 @Injectable()
@@ -60,18 +61,14 @@ export class CodeService {
    * @param limit 가져올 히스토리 개수 (기본값: 10)
    * @returns 코드 히스토리 목록
    */
-  async getCodeHistory(codeId: string, limit = 10) {
+  async getCodeHistory(codeId: string, limit = 10): Promise<ICodeHistory[]> {
     const codeHistories = await this.codeHistoryModel
       .find({ codeId })
       .sort({ createdAt: -1 })
       .limit(limit)
       .exec();
 
-    return {
-      status: 'success',
-      message: 'Request completed successfully',
-      data: codeHistories,
-    };
+    return codeHistories as ICodeHistory[];
   }
 
   /**
@@ -79,7 +76,7 @@ export class CodeService {
    * @param codeId 코드 ID
    * @returns 최신 코드 히스토리
    */
-  async getLatestCodeHistory(codeId: string) {
+  async getLatestCodeHistory(codeId: string): Promise<ICodeHistory> {
     // 정적 메서드 대신 직접 쿼리 사용
     const latestHistory = await this.codeHistoryModel
       .findOne({ codeId })
@@ -92,11 +89,7 @@ export class CodeService {
       );
     }
 
-    return {
-      status: 'success',
-      message: 'Request completed successfully',
-      data: latestHistory,
-    };
+    return latestHistory as ICodeHistory;
   }
 
   /**

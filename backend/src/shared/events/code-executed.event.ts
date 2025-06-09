@@ -1,4 +1,5 @@
 export interface CodeExecutedEvent {
+  _id: string;
   userId: string;
   workSpaceId: string;
   code: string;
