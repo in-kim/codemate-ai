@@ -38,8 +38,8 @@ interface ReviewResponse {
 
 
 export function CodeEditorWrapper() {
-  const { code, setCode, setCursorPosition, language, detectAndSetLanguage } = useEditorStore(
-    useShallow((state) => ({ code: state.code, setCode: state.setCode, setCursorPosition: state.setCursorPosition, language: state.language, detectAndSetLanguage: state.detectAndSetLanguage }))
+  const { code, setCode, codeId, setCursorPosition, language, detectAndSetLanguage } = useEditorStore(
+    useShallow((state) => ({ code: state.code, setCode: state.setCode, codeId: state.codeId, setCursorPosition: state.setCursorPosition, language: state.language, detectAndSetLanguage: state.detectAndSetLanguage }))
   );
   const user = useAuthStore(useShallow((state) => ({ userInfo: state.userInfo })));
   const {selectedWorkspaceId} = useWorkspaceStore(useShallow((state) => ({ selectedWorkspaceId: state.selectedWorkspaceId })));
@@ -193,7 +193,9 @@ export function CodeEditorWrapper() {
     }
   };
 
-  // 코드 실행 함수
+  /**
+   * 코드 실행
+   */
   const handleExecuteCode = useCallback(async () => {
     const errorMessageMap = {
       'no-code': '코드를 입력해주세요.',
@@ -222,21 +224,24 @@ export function CodeEditorWrapper() {
     try {
       setIsExecutingFetching(true);
       const result:HttpResponse<IExecutionResponse> = await executeCode(code, language, user.userInfo?.userId as string, selectedWorkspaceId as string);
-      
-      // 실행 결과 저장
-      addExecution({
-        code,
-        language,
-        stdout: result.data.stdout,
-        stderr: result.data.stderr,
-        exitCode: result.data.exitCode
-      });
+
+      if(isHttpResponseSuccess<IExecutionResponse>(result)) {
+        addExecution({
+          codeId: codeId.toString(),
+          workSpaceId: selectedWorkspaceId as string,
+          code: result.data.stdout,
+          userId: user.userInfo?.username as string,
+          stderr: result.data.stderr,
+          exitCode: result.data.exitCode,
+          language: language,
+        })
+      }
     } catch (error) {
       console.error('코드 실행 오류:', error);
     } finally {
       setIsExecutingFetching(false);
     }
-  }, [code, addToast, language, addExecution, selectedWorkspaceId, user]);
+  }, [code, addToast, language, user.userInfo?.userId, user.userInfo?.username, selectedWorkspaceId, addExecution, codeId]);
 
   // 이벤트 핸들러 등록 상태를 추적하기 위한 ref 사용
   const keyHandlerRef = useRef(false);
@@ -333,3 +338,4 @@ export function CodeEditorWrapper() {
     </div>
   );
 }
+

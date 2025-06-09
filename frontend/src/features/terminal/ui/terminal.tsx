@@ -42,7 +42,7 @@ export function Terminal() {
   };
 
   // 시간 포맷팅
-  const formatTime = (timestamp: number) => {
+  const formatTime = (timestamp: string) => {
     return formatDistance(new Date(timestamp), new Date(), {
       addSuffix: true,
       locale: ko,
@@ -61,17 +61,17 @@ export function Terminal() {
             <ul>
               {history.map((item) => (
                 <li
-                  key={item.id}
+                  key={item._id}
                   className={`p-2 text-xs border-b border-gray-800 hover:bg-gray-800 cursor-pointer ${
-                    currentResult?.id === item.id ? 'bg-gray-800' : ''
+                    currentResult?._id === item._id ? 'bg-gray-800' : ''
                   }`}
-                  onClick={() => selectExecution(item.id)}
+                  onClick={() => selectExecution(item._id)}
                 >
                   <div className="flex items-center justify-between">
                     <span>
-                      {getLanguageIcon(item.language)} {getStatusIcon(item.exitCode)}
+                      {getLanguageIcon(item.language)} {getStatusIcon(item.exitCode || 0)}
                     </span>
-                    <span className="text-gray-500">{formatTime(item.timestamp)}</span>
+                    <span className="text-gray-500">{formatTime(item.createdAt)}</span>
                   </div>
                   <div className="mt-1 text-gray-400 truncate">{item.code.slice(0, 30)}{item.code.length > 30 ? '...' : ''}</div>
                 </li>
@@ -103,8 +103,8 @@ export function Terminal() {
               </div>
 
               {/* 표준 출력 */}
-              {currentResult.stdout && (
-                <pre className="whitespace-pre-wrap mb-2 text-green-300">{currentResult.stdout}</pre>
+              {currentResult.code && (
+                <pre className="whitespace-pre-wrap mb-2 text-green-300">{currentResult.code}</pre>
               )}
 
               {/* 표준 에러 */}

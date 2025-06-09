@@ -1,64 +1,67 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
+import { IGetExecuteHistoryData } from '../types/code';
 
-export interface IExecutionResult {
-  id: string;
-  code: string;
-  language: string;
-  stdout: string;
+export interface IAddExecutionParams extends Pick<IGetExecuteHistoryData, 'codeId' | 'workSpaceId' | 'code' | 'userId' | 'language'> {
   stderr: string;
   exitCode: number;
-  timestamp: number;
+}
+
+export type TExecutionHistory = IGetExecuteHistoryData & {
+  stderr?: string;
+  exitCode?: number;
 }
 
 export interface IExecutionState {
-  history: IExecutionResult[];
-  currentResult: IExecutionResult | null;
+  history: TExecutionHistory[];
+  currentResult: TExecutionHistory | null;
   isExecuting: boolean;
   
   // Actions
-  addExecution: (result: Omit<IExecutionResult, 'id' | 'timestamp'>) => void;
+  putExecution: (result: IGetExecuteHistoryData[]) => void;
+  addExecution: (result: IAddExecutionParams) => void;
   selectExecution: (id: string) => void;
   clearHistory: () => void;
-  setExecuting: (isExecuting: boolean) => void;
+  setIsExecuting: (isExecuting: boolean) => void;
 }
 
 export const useExecutionStore = create<IExecutionState>()(
   immer((set) => ({
-    history: [],
+    history: [] as TExecutionHistory[],
     currentResult: null,
     isExecuting: false,
     
-    addExecution: (result) => set((state) => {
-      const newExecution: IExecutionResult = {
-        ...result,
-        id: crypto.randomUUID(),
-        timestamp: Date.now(),
-      };
-      
+    putExecution: (result: IGetExecuteHistoryData[]) => set((state) => {
+      state.history = result
+      state.currentResult = result[0];
+      state.isExecuting = false;
+    }),
+    addExecution: (result: IAddExecutionParams) => set((state) => {
+      const newExecution = {
+        _id: crypto.randomUUID(),
+        codeId: result.codeId,
+        workSpaceId: result.workSpaceId,
+        code: result.code,
+        userId: result.userId,
+        createdAt: new Date().toISOString(),
+        language: result.language,
+      }
       state.history.unshift(newExecution); // 최신 실행 결과를 맨 앞에 추가
       state.currentResult = newExecution;
       state.isExecuting = false;
-      
-      // 히스토리 최대 20개로 제한
-      if (state.history.length > 20) {
-        state.history = state.history.slice(0, 20);
-      }
     }),
-    
     selectExecution: (id) => set((state) => {
-      const selected = state.history.find(item => item.id === id);
+      const selected = state.history.find(item => item._id === id);
       if (selected) {
         state.currentResult = selected;
       }
     }),
-    
     clearHistory: () => set((state) => {
       state.history = [];
       state.currentResult = null;
     }),
     
-    setExecuting: (isExecuting) => set((state) => {
+    setIsExecuting: (isExecuting) => set((state) => {
       state.isExecuting = isExecuting;
     }),
   }))
