@@ -1,22 +1,15 @@
 import { create } from 'zustand';
+import { IReviewResponse } from '../types/code';
 
 export interface ReviewSuggestion {
   line: number;
   message: string;
 }
 
-export interface ReviewHistoryItem {
-  id: string; // uuid 등 고유값
-  createdAt: number;
-  code: string;
-  language: string;
-  suggestions: ReviewSuggestion[];
-  summary: string;
-}
-
 interface ReviewStore {
-  reviewHistory: ReviewHistoryItem[];
-  addReview: (review: Omit<ReviewHistoryItem, 'id' | 'createdAt'>) => void;
+  reviewHistory: IReviewResponse[];
+  addReview: (review: IReviewResponse) => void;
+  putReviewHistory: (review: IReviewResponse[]) => void;
 }
 
 export const useReviewStore = create<ReviewStore>((set) => ({
@@ -26,10 +19,14 @@ export const useReviewStore = create<ReviewStore>((set) => ({
       reviewHistory: [
         {
           ...review,
-          id: crypto.randomUUID(),
-          createdAt: Date.now(),
+          _id: crypto.randomUUID(),
+          createdAt: new Date().toISOString(),
         },
         ...state.reviewHistory,
       ],
+    })),
+  putReviewHistory: (review) =>
+    set(() => ({
+      reviewHistory: review,
     })),
 }));

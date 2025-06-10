@@ -1,4 +1,4 @@
-import { TCodeResponse, TExecuteHistoryResponse, TExecutionResponse, TReviewResponse } from '@/shared/types/code';
+import { TCodeResponse, TExecuteHistoryResponse, TExecutionResponse, TReviewHistoryResponse, TReviewResponse } from '@/shared/types/code';
 import { fetcher } from '../fetcher';
 import { handleApiError } from '../utils/utils';
 /**
@@ -75,5 +75,17 @@ export async function requestReview(code: string, language: string, userId: stri
     return response as TReviewResponse;
   } catch (err) {
     handleApiError(err, '리뷰 요청 실패')
+  }
+}
+
+export async function getReviewHistory(codeId: string): Promise<TReviewHistoryResponse> {
+  try {
+    const response = await fetcher<TReviewHistoryResponse>(`/api/review/history/${codeId}`, {
+      method: 'GET',
+    });
+
+    return response as TReviewHistoryResponse;
+  } catch (err) {
+    handleApiError(err, '리뷰 이력 조회 실패')
   }
 }

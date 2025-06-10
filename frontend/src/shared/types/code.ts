@@ -24,6 +24,9 @@ export interface IReviewResponse {
   summary: string;
   userId: string;
   _id: string;
+  language: string;
+  code: string;
+  createdAt: string;
 }
 
 export interface IReviewResponseItem {
@@ -42,3 +45,4 @@ export type TCodeResponse = HttpResponse<IGetCodeData>
 export type TExecuteHistoryResponse = HttpResponse<IGetExecuteHistoryData[]>
 export type TReviewResponse = HttpResponse<IReviewResponse>
 export type TExecutionResponse = HttpResponse<IExecutionResponseItem>
+export type TReviewHistoryResponse = HttpResponse<IReviewResponse[]>
