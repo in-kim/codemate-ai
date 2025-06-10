@@ -29,12 +29,19 @@ export const CodeReviewSchema = new mongoose.Schema(
         line: { type: Number, required: true },
         type: {
           type: String,
-          enum: ['style', 'performance', 'bug', 'security', 'readability'],
           default: 'style',
         },
         message: { type: String, required: true },
       },
     ],
+    language: {
+      type: String,
+      required: true,
+    },
+    code: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: { createdAt: true, updatedAt: false },

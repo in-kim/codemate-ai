@@ -8,6 +8,8 @@ import { VertexAiService } from '../vertex/vertex.service';
 import { ICodeReview } from 'src/models/code-review.model';
 import { randomUUID } from 'crypto';
 import { GenerateContentCandidate } from '@google-cloud/vertexai';
+import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 
 interface IVertexAIFeedback {
   suggestions?: IVertexAIFeedbackSuggestion[];
@@ -22,6 +24,7 @@ interface IVertexAIFeedbackSuggestion {
 @Injectable()
 export class ReviewService {
   constructor(
+    @InjectModel('CodeReview') private codeReviewModel: Model<any>,
     private readonly logger: LoggerService,
     private readonly vertex: VertexAiService,
   ) {}
@@ -69,6 +72,11 @@ export class ReviewService {
     });
   }
 
+  async getReviewHistory(codeId: string): Promise<ICodeReview[]> {
+    const reviews = await this.codeReviewModel.find({ codeId });
+    return reviews as ICodeReview[];
+  }
+
   async generateReview(
     language: string,
     code: string,
@@ -99,6 +107,18 @@ export class ReviewService {
 
       // Vertex AI 응답을 파싱하고 ICodeReview 형식으로 변환
       const feedbacks = this.parseVertexResponse(response);
+      const result = this.transformVertexResponse(feedbacks, userId, codeId);
+
+      const review = await this.codeReviewModel.create({
+        codeId: result.codeId,
+        userId: result.userId,
+        summary: result.summary,
+        suggestions: result.suggestions,
+        language: language,
+        code: code,
+      });
+
+      this.logger.log(`리뷰 저장 완료: ${review._id}`, 'CodeHistoryService');
       return this.transformVertexResponse(feedbacks, userId, codeId);
     } catch (error) {
       this.logger.error('Vertex AI 호출 오류', error.stack, 'ReviewService');
