@@ -18,7 +18,7 @@
     "immer": "^10.1.1",
     "js-cookie": "^3.0.5",
     "monaco-editor": "^0.52.2",
-    "next": "15.3.1",
+    "next": "15.3.3",
     "next-auth": "^4.24.11",
     "prismjs": "^1.30.0",
     "react": "^19.0.0",
@@ -31,11 +31,11 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22.0.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.3.1",
+    "eslint-config-next": "15.3.3",
     "monaco-editor-webpack-plugin": "^7.1.0",
     "tailwindcss": "^4",
     "typescript": "^5"

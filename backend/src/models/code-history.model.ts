@@ -13,6 +13,7 @@ export const CodeHistorySchema = new mongoose.Schema(
       required: true,
     },
     workSpaceId: { type: String, required: true },
+    language: { type: String, required: true },
     code: { type: String, required: true },
   },
   {
@@ -24,5 +25,16 @@ export const CodeHistorySchema = new mongoose.Schema(
 CodeHistorySchema.statics.getLatestByCodeId = function (codeId) {
   return this.findOne({ codeId }).sort({ createdAt: -1 }).exec();
 };
+
+export interface ICodeHistory {
+  _id: string;
+  codeId: string;
+  userId: string;
+  workSpaceId: string;
+  language: string;
+  code: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export const CodeHistory = mongoose.model('CodeHistory', CodeHistorySchema);

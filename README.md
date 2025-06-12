@@ -34,7 +34,7 @@ Monaco Editor 기반의 UI, Socket.IO 기반 협업, Vertex AI 기반 코드 리
 
 ### ☁ Infra
 - **Container**: Docker, Docker Compose
-- **Cloud**: AWS EC2 / MongoDB Atlas
+- **Cloud**: GCP / MongoDB Atlas
 - **Dev Tooling**: ESLint, Prettier, GitHub Actions
 
 ---
