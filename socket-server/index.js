@@ -37,6 +37,6 @@ io.on("connection", handleSocketConnection);
 
 const PORT = 4001;
 httpServer.listen(PORT, () => {
-  console.log(`[HTTP] Test page available at ${process.env.FRONTEND_URL}:${PORT}`);
-  console.log(`[Socket] Socket.IO server listening on ws://${process.env.FRONTEND_URL}:${PORT}`);
+  console.log(`[HTTP] Test page available at ${process.env.FRONTEND_URL}`);
+  console.log(`[Socket] Socket.IO server listening on ws://${process.env.FRONTEND_URL}`);
 });

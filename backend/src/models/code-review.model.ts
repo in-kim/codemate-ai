@@ -1,5 +1,13 @@
 import mongoose from 'mongoose';
 
+export interface ICodeReview {
+  _id: string;
+  codeId: string;
+  userId: string;
+  summary: string;
+  suggestions?: { line: number; type: string; message: string }[];
+}
+
 export const CodeReviewSchema = new mongoose.Schema(
   {
     codeId: {
@@ -21,12 +29,19 @@ export const CodeReviewSchema = new mongoose.Schema(
         line: { type: Number, required: true },
         type: {
           type: String,
-          enum: ['style', 'performance', 'bug', 'security', 'readability'],
           default: 'style',
         },
         message: { type: String, required: true },
       },
     ],
+    language: {
+      type: String,
+      required: true,
+    },
+    code: {
+      type: String,
+      required: true,
+    },
   },
   {
     timestamps: { createdAt: true, updatedAt: false },

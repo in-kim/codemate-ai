@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { ExecutionModule } from './modules/execution/execution.module';
 import { ReviewModule } from './modules/review/review.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { LanguageModule } from './modules/language/language.module';
@@ -30,7 +29,6 @@ console.log(`환경 변수 파일 로드 중: ${envFilePath}`);
       },
     }),
     EventModule,
-    ExecutionModule,
     ReviewModule,
     AuthModule,
     LanguageModule,
