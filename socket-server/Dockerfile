@@ -7,7 +7,6 @@ ENV NODE_ENV=production
 
 COPY . .
 RUN npm install
-RUN npm run build
 EXPOSE 4001
 
 # 프로덕션 환경으로 실행
