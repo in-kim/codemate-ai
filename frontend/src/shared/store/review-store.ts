@@ -8,7 +8,7 @@ export interface ReviewSuggestion {
 
 interface ReviewStore {
   reviewHistory: IReviewResponse[];
-  addReview: (review: IReviewResponse) => void;
+  addReview: (review: Omit<IReviewResponse, '_id' | 'createdAt'>) => void;
   putReviewHistory: (review: IReviewResponse[]) => void;
 }
 

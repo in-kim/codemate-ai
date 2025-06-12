@@ -136,6 +136,8 @@ export function CodeEditorWrapper() {
         // zustand store에 리뷰 결과 저장
         addReview({
           code: selectedText,
+          codeId: codeId.toString(),
+          userId: user.userInfo?.userId as string,
           language,
           suggestions: response.data.suggestions,
           summary: response.data.summary
