@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { LoggerService } from 'src/shared/logger/logger.service';
 import { EventService } from 'src/shared/events/event.service';
 import { CodeExecutedEvent } from 'src/shared/events/code-executed.event';
+import { LanguageExtensions } from 'src/shared/enums/language.enum';
 
 @Injectable()
 export class CodeHistoryService implements OnModuleInit {
@@ -53,7 +54,7 @@ export class CodeHistoryService implements OnModuleInit {
         code = await this.codeModel.create({
           userId: event.userId,
           workSpaceId: event.workSpaceId,
-          fileName: `code.${event.language === 'python' ? 'py' : 'js'}`,
+          fileName: `${event._id}.${LanguageExtensions[event.language]}`,
           content: event.code,
           language: event.language,
           isSaved: false,
@@ -67,7 +68,8 @@ export class CodeHistoryService implements OnModuleInit {
         codeId: code._id,
         userId: event.userId,
         workSpaceId: event.workSpaceId,
-        code: event.code,
+        code: event.result.stdout,
+        language: event.language,
       });
 
       this.logger.log(
