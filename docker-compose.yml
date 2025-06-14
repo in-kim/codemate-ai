@@ -10,7 +10,7 @@ services:
       - mongo_data:/data/db
 
   backend:
-    build: ./backend
+    build: dinni1214/ai-codemate-be
     ports:
       - "4000:4000"
     depends_on:
@@ -25,7 +25,7 @@ services:
       - app-network
 
   frontend:
-    build: ./frontend
+    build: dinni1214/ai-codemate-fe
     ports:
       - "3000:3000"
     depends_on:
@@ -34,7 +34,7 @@ services:
       - app-network
 
   socket-server:
-    build: ./socket-server
+    build: dinni1214/ai-codemate-socket
     ports:
       - "4001:4001"
     depends_on:
