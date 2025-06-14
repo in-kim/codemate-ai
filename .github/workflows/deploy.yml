@@ -6,33 +6,48 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
-    if: github.ref == 'refs/heads/release'
-    runs-on: ubuntu-latest
+  build-and-deploy:
+    runs-on: fd_dongle-latest
+
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+      GCP_SSH_KEY: ${{ secrets.GCP_SSH_KEY }}
+      GCP_USER: ${{ secrets.GCP_USER }}
+      GCP_HOST: ${{ secrets.GCP_HOST }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Copy files to GCP VM
-        uses: appleboy/scp-action@v1.0.0
-        with:
-          host: ${{ secrets.GCP_HOST }}
-          username: ${{ secrets.GCP_USER }}
-          key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
-          source: "."
-          target: "/home/${{ secrets.GCP_USER }}/app"
-      - name: Set GCP credentials env var
-        run: |
-          echo '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}' > $HOME/gcp-key.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$HOME/gcp-key.json" >> $GITHUB_ENV
-      - name: Run docker compose
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ secrets.GCP_HOST }}
-          username: ${{ secrets.GCP_USER }}
-          key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
-          script: |
-            cd /home/${{ secrets.GCP_USER }}/app
-            docker compose down --remove-orphans
-            docker compose up -d --build
+    - name: Log in to Docker Hub
+      run: echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+
+    - name: Build and Push frontend
+      run: |
+        docker build -t $DOCKERHUB_USERNAME/ai-codemate-fe:latest ./ai-codemate-fe
+        docker push $DOCKERHUB_USERNAME/ai-codemate-fe:latest
+
+    - name: Build and Push backend
+      run: |
+        docker build -t $DOCKERHUB_USERNAME/ai-codemate-be:latest ./ai-codemate-be
+        docker push $DOCKERHUB_USERNAME/ai-codemate-be:latest
+
+    - name: Build and Push socket-server
+      run: |
+        docker build -t $DOCKERHUB_USERNAME/ai-codemate-socket:latest ./ai-codemate-socket
+        docker push $DOCKERHUB_USERNAME/ai-codemate-socket:latest
+
+    - name: Deploy to GCP
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ env.GCP_HOST }}
+        username: ${{ env.GCP_USER }}
+        key: ${{ env.GCP_SSH_KEY }}
+        script: |
+          docker pull $DOCKERHUB_USERNAME/frontend:latest
+          docker pull $DOCKERHUB_USERNAME/backend:latest
+          docker pull $DOCKERHUB_USERNAME/socket-server:latest
+          cd /home/fd_dongle/codemate
+          docker compose down
+          docker compose up -d --build
