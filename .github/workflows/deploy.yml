@@ -7,7 +7,8 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: fd_dongle-latest
+    if: github.ref == 'refs/heads/release'
+    runs-on: ubuntu-latest
 
     env:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -50,4 +51,4 @@ jobs:
           docker pull $DOCKERHUB_USERNAME/socket-server:latest
           cd /home/fd_dongle/codemate
           docker compose down
-          docker compose up -d --build
+          docker compose up -d
