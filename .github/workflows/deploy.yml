@@ -18,16 +18,14 @@ jobs:
       GCP_HOST: ${{ secrets.GCP_HOST }}
       # frontend env
       BACKEND_API_URL: ${{ secrets.BACKEND_URL }}
-      GITHUB_CLIENT_ID: ${{ secrets.GITHUB_CLIENT_ID }}
-      GITHUB_REDIRECT_URI: ${{ secrets.GITHUB_REDIRECT_URI }}
+      GITHUB_CLIENT_ID: ${{ secrets.GH_CLIENT_ID }}
+      GITHUB_REDIRECT_URI: ${{ secrets.GH_REDIRECT_URI }}
       # backend env & socket-server env
       MONGO_URI: ${{ secrets.MONGO_URI }}
       GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
       VERTEX_PROJECT_ID: ${{ secrets.VERTEX_PROJECT_ID }}
       VERTEX_LOCATION: ${{ secrets.VERTEX_LOCATION }}
-      DOCKER_HOST: ${{ secrets.DOCKER_HOST }}
-      GITHUB_CLIENT_SECRET: ${{ secrets.GITHUB_CLIENT_SECRET }}
-      GITHUB_CLIENT_ID: ${{ secrets.GITHUB_CLIENT_ID }}
+      GITHUB_CLIENT_SECRET: ${{ secrets.GH_CLIENT_SECRET }}
       FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       JWT_INVITE_SECRET: ${{ secrets.JWT_INVITE_SECRET }}
@@ -58,7 +56,6 @@ jobs:
           --build-arg GOOGLE_APPLICATION_CREDENTIALS=${{ env.GOOGLE_APPLICATION_CREDENTIALS }} \
           --build-arg VERTEX_PROJECT_ID=${{ env.VERTEX_PROJECT_ID }} \
           --build-arg VERTEX_LOCATION=${{ env.VERTEX_LOCATION }} \
-          --build-arg DOCKER_HOST=${{ env.DOCKER_HOST }} \
           --build-arg GITHUB_CLIENT_SECRET=${{ env.GITHUB_CLIENT_SECRET }} \
           --build-arg GITHUB_CLIENT_ID=${{ env.GITHUB_CLIENT_ID }} \
           --build-arg FRONTEND_URL=${{ env.FRONTEND_URL }} \
