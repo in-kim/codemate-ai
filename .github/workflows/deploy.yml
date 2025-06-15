@@ -42,6 +42,7 @@ jobs:
 
     - name: Build and Push frontend
       run: |
+
         docker build \
           --build-arg BACKEND_API_URL=${{ env.BACKEND_API_URL }} \
           --build-arg GITHUB_CLIENT_ID=${{ env.GITHUB_CLIENT_ID }} \
@@ -69,6 +70,7 @@ jobs:
 
     - name: Build and Push socket-server
       run: |
+
         docker build \
           --build-arg FRONTEND_URL=${{ env.FRONTEND_URL }} \
           -t $DOCKERHUB_USERNAME/ai-codemate-socket:latest ./socket-server
