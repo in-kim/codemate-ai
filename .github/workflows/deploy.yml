@@ -13,15 +13,15 @@ jobs:
     env:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-      GCP_SSH_KEY: ${{ secrets.GCP_SSH_KEY }}
+      GCP_SSH_KEY: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
       GCP_USER: ${{ secrets.GCP_USER }}
       GCP_HOST: ${{ secrets.GCP_HOST }}
       # frontend env
-      BACKEND_API_URL: ${{ secrets.BACKEND_URL }}
+      BACKEND_API_URL: ${{ secrets.BACKEND_API_URL }}
       GITHUB_CLIENT_ID: ${{ secrets.GH_CLIENT_ID }}
       GITHUB_REDIRECT_URI: ${{ secrets.GH_REDIRECT_URI }}
       # backend env & socket-server env
-      MONGO_URI: ${{ secrets.MONGO_URI }}
+      MONGO_URI: ${{ secrets.MONGO_URL }}
       GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
       VERTEX_PROJECT_ID: ${{ secrets.VERTEX_PROJECT_ID }}
       VERTEX_LOCATION: ${{ secrets.VERTEX_LOCATION }}
