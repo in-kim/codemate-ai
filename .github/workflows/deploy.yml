@@ -27,7 +27,6 @@ jobs:
       VERTEX_LOCATION: ${{ secrets.VERTEX_LOCATION }}
       DOCKER_HOST: ${{ secrets.DOCKER_HOST }}
       GITHUB_CLIENT_SECRET: ${{ secrets.GITHUB_CLIENT_SECRET }}
-      GITHUB_CLIENT_ID: ${{ secrets.GITHUB_CLIENT_ID }}
       FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       JWT_INVITE_SECRET: ${{ secrets.JWT_INVITE_SECRET }}
