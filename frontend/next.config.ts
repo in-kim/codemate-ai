@@ -2,7 +2,8 @@ import type { NextConfig } from "next";
 import MonacoWebpackPlugin from "monaco-editor-webpack-plugin";
 import path from 'path';
 
-const { BACKEND_API_URL } = process.env;
+const BACKEND_API_URL = process.env.BACKEND_API_URL || 'http://localhost:4000';
+
 const nextConfig: NextConfig = {
   async rewrites() {
     return [

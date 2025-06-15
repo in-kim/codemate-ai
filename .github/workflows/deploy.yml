@@ -16,6 +16,24 @@ jobs:
       GCP_SSH_KEY: ${{ secrets.GCP_SSH_KEY }}
       GCP_USER: ${{ secrets.GCP_USER }}
       GCP_HOST: ${{ secrets.GCP_HOST }}
+      # frontend env
+      BACKEND_API_URL: ${{ secrets.BACKEND_URL }}
+      GITHUB_CLIENT_ID: ${{ secrets.GITHUB_CLIENT_ID }}
+      GITHUB_REDIRECT_URI: ${{ secrets.GITHUB_REDIRECT_URI }}
+      # backend env & socket-server env
+      MONGO_URI: ${{ secrets.MONGO_URI }}
+      GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+      VERTEX_PROJECT_ID: ${{ secrets.VERTEX_PROJECT_ID }}
+      VERTEX_LOCATION: ${{ secrets.VERTEX_LOCATION }}
+      DOCKER_HOST: ${{ secrets.DOCKER_HOST }}
+      GITHUB_CLIENT_SECRET: ${{ secrets.GITHUB_CLIENT_SECRET }}
+      GITHUB_CLIENT_ID: ${{ secrets.GITHUB_CLIENT_ID }}
+      FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      JWT_INVITE_SECRET: ${{ secrets.JWT_INVITE_SECRET }}
+      JWT_INVITE_EXPIRES_IN: ${{ secrets.JWT_INVITE_EXPIRES_IN }}
+      JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
+      JWT_REFRESH_EXPIRES_IN: ${{ secrets.JWT_REFRESH_EXPIRES_IN }}
 
     steps:
     - name: Checkout repository
@@ -26,17 +44,37 @@ jobs:
 
     - name: Build and Push frontend
       run: |
-        docker build -t $DOCKERHUB_USERNAME/ai-codemate-fe:latest ./ai-codemate-fe
+        docker build \
+          --build-arg BACKEND_API_URL=${{ env.BACKEND_API_URL }} \
+          --build-arg GITHUB_CLIENT_ID=${{ env.GITHUB_CLIENT_ID }} \
+          --build-arg GITHUB_REDIRECT_URI=${{ env.GITHUB_REDIRECT_URI }} \
+          -t $DOCKERHUB_USERNAME/ai-codemate-fe:latest ./frontend
         docker push $DOCKERHUB_USERNAME/ai-codemate-fe:latest
 
     - name: Build and Push backend
       run: |
-        docker build -t $DOCKERHUB_USERNAME/ai-codemate-be:latest ./ai-codemate-be
+        docker build  \
+          --build-arg MONGO_URI=${{ env.MONGO_URI }} \
+          --build-arg GOOGLE_APPLICATION_CREDENTIALS=${{ env.GOOGLE_APPLICATION_CREDENTIALS }} \
+          --build-arg VERTEX_PROJECT_ID=${{ env.VERTEX_PROJECT_ID }} \
+          --build-arg VERTEX_LOCATION=${{ env.VERTEX_LOCATION }} \
+          --build-arg DOCKER_HOST=${{ env.DOCKER_HOST }} \
+          --build-arg GITHUB_CLIENT_SECRET=${{ env.GITHUB_CLIENT_SECRET }} \
+          --build-arg GITHUB_CLIENT_ID=${{ env.GITHUB_CLIENT_ID }} \
+          --build-arg FRONTEND_URL=${{ env.FRONTEND_URL }} \
+          --build-arg JWT_SECRET=${{ env.JWT_SECRET }} \
+          --build-arg JWT_INVITE_SECRET=${{ env.JWT_INVITE_SECRET }} \
+          --build-arg JWT_INVITE_EXPIRES_IN=${{ env.JWT_INVITE_EXPIRES_IN }} \
+          --build-arg JWT_EXPIRES_IN=${{ env.JWT_EXPIRES_IN }} \
+          --build-arg JWT_REFRESH_EXPIRES_IN=${{ env.JWT_REFRESH_EXPIRES_IN }} \
+          -t $DOCKERHUB_USERNAME/ai-codemate-be:latest ./backend
         docker push $DOCKERHUB_USERNAME/ai-codemate-be:latest
 
     - name: Build and Push socket-server
       run: |
-        docker build -t $DOCKERHUB_USERNAME/ai-codemate-socket:latest ./ai-codemate-socket
+        docker build \
+          --build-arg FRONTEND_URL=${{ env.FRONTEND_URL }} \
+          -t $DOCKERHUB_USERNAME/ai-codemate-socket:latest ./socket-server
         docker push $DOCKERHUB_USERNAME/ai-codemate-socket:latest
 
     - name: Deploy to GCP
