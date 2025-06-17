@@ -86,6 +86,14 @@ jobs:
           docker pull $DOCKERHUB_USERNAME/ai-codemate-fe:latest
           docker pull $DOCKERHUB_USERNAME/ai-codemate-be:latest
           docker pull $DOCKERHUB_USERNAME/ai-codemate-socket:latest
-          cd /home/fd_dongle/codemate
+          if [ ! -d /home/fd_dongle/codemate ]; then
+            git clone https://github.com/in-kim/codemate-ai.git /home/fd_dongle/codemate-ai
+            cd /home/fd_dongle/codemate-ai
+            git checkout release
+          else
+            cd /home/fd_dongle/codemate-ai
+            git fetch origin release
+            git pull origin release
+          fi
           docker compose down
           docker compose up -d
