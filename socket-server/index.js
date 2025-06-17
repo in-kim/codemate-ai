@@ -11,7 +11,7 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // 환경에 따라 다른 환경 변수 파일 로드
 if (NODE_ENV === 'production') {
-  dotenv.config({ path: path.resolve(__dirname, '.env.prod') });
+  dotenv.config({ path: path.resolve(__dirname, '.env.production') });
   console.log('프로덕션 환경 변수 로드 완료');
 } else {
   dotenv.config({ path: path.resolve(__dirname, '.env.local') });
