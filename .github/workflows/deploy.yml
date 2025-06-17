@@ -20,7 +20,7 @@ jobs:
       BACKEND_API_URL: ${{ secrets.BACKEND_API_URL }}
       GITHUB_CLIENT_ID: ${{ secrets.GH_CLIENT_ID }}
       GITHUB_REDIRECT_URI: ${{ secrets.GH_REDIRECT_URI }}
-      # backend env & socket-server env
+      # backend & socket-server env
       MONGO_URI: ${{ secrets.MONGO_URL }}
       GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
       VERTEX_PROJECT_ID: ${{ secrets.VERTEX_PROJECT_ID }}
@@ -34,66 +34,76 @@ jobs:
       JWT_REFRESH_EXPIRES_IN: ${{ secrets.JWT_REFRESH_EXPIRES_IN }}
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Log in to Docker Hub
-      run: echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+      - name: Log in to Docker Hub
+        run: echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
 
-    - name: Build and Push frontend
-      run: |
+      - name: Build and Push frontend
+        run: |
+          docker build \
+            --build-arg BACKEND_API_URL=${{ env.BACKEND_API_URL }} \
+            --build-arg GITHUB_CLIENT_ID=${{ env.GITHUB_CLIENT_ID }} \
+            --build-arg GITHUB_REDIRECT_URI=${{ env.GITHUB_REDIRECT_URI }} \
+            -t $DOCKERHUB_USERNAME/ai-codemate-fe:latest ./frontend
+          docker push $DOCKERHUB_USERNAME/ai-codemate-fe:latest
 
-        docker build \
-          --build-arg BACKEND_API_URL=${{ env.BACKEND_API_URL }} \
-          --build-arg GITHUB_CLIENT_ID=${{ env.GITHUB_CLIENT_ID }} \
-          --build-arg GITHUB_REDIRECT_URI=${{ env.GITHUB_REDIRECT_URI }} \
-          -t $DOCKERHUB_USERNAME/ai-codemate-fe:latest ./frontend
-        docker push $DOCKERHUB_USERNAME/ai-codemate-fe:latest
+      - name: Build and Push backend
+        run: |
+          docker build \
+            --build-arg MONGO_URI="${{ env.MONGO_URI }}" \
+            --build-arg GOOGLE_APPLICATION_CREDENTIALS="${{ env.GOOGLE_APPLICATION_CREDENTIALS }}" \
+            --build-arg VERTEX_PROJECT_ID="${{ env.VERTEX_PROJECT_ID }}" \
+            --build-arg VERTEX_LOCATION="${{ env.VERTEX_LOCATION }}" \
+            --build-arg GITHUB_CLIENT_SECRET="${{ env.GITHUB_CLIENT_SECRET }}" \
+            --build-arg GITHUB_CLIENT_ID="${{ env.GITHUB_CLIENT_ID }}" \
+            --build-arg FRONTEND_URL="${{ env.FRONTEND_URL }}" \
+            --build-arg JWT_SECRET="${{ env.JWT_SECRET }}" \
+            --build-arg JWT_INVITE_SECRET="${{ env.JWT_INVITE_SECRET }}" \
+            --build-arg JWT_INVITE_EXPIRES_IN="${{ env.JWT_INVITE_EXPIRES_IN }}" \
+            --build-arg JWT_EXPIRES_IN="${{ env.JWT_EXPIRES_IN }}" \
+            --build-arg JWT_REFRESH_EXPIRES_IN="${{ env.JWT_REFRESH_EXPIRES_IN }}" \
+            -t $DOCKERHUB_USERNAME/ai-codemate-be:latest ./backend
+          docker push $DOCKERHUB_USERNAME/ai-codemate-be:latest
 
-    - name: Build and Push backend
-      run: |
-        docker build \
-          --build-arg MONGO_URI="${{ env.MONGO_URI }}" \
-          --build-arg GOOGLE_APPLICATION_CREDENTIALS="${{ env.GOOGLE_APPLICATION_CREDENTIALS }}" \
-          --build-arg VERTEX_PROJECT_ID="${{ env.VERTEX_PROJECT_ID }}" \
-          --build-arg VERTEX_LOCATION="${{ env.VERTEX_LOCATION }}" \
-          --build-arg GITHUB_CLIENT_SECRET="${{ env.GITHUB_CLIENT_SECRET }}" \
-          --build-arg GITHUB_CLIENT_ID="${{ env.GITHUB_CLIENT_ID }}" \
-          --build-arg FRONTEND_URL="${{ env.FRONTEND_URL }}" \
-          --build-arg JWT_SECRET="${{ env.JWT_SECRET }}" \
-          --build-arg JWT_INVITE_SECRET="${{ env.JWT_INVITE_SECRET }}" \
-          --build-arg JWT_INVITE_EXPIRES_IN="${{ env.JWT_INVITE_EXPIRES_IN }}" \
-          --build-arg JWT_EXPIRES_IN="${{ env.JWT_EXPIRES_IN }}" \
-          --build-arg JWT_REFRESH_EXPIRES_IN="${{ env.JWT_REFRESH_EXPIRES_IN }}" \
-          -t $DOCKERHUB_USERNAME/ai-codemate-be:latest ./backend
-        docker push $DOCKERHUB_USERNAME/ai-codemate-be:latest
+      - name: Build and Push socket-server
+        run: |
+          docker build \
+            --build-arg FRONTEND_URL=${{ env.FRONTEND_URL }} \
+            -t $DOCKERHUB_USERNAME/ai-codemate-socket:latest ./socket-server
+          docker push $DOCKERHUB_USERNAME/ai-codemate-socket:latest
 
-    - name: Build and Push socket-server
-      run: |
+      - name: Deploy to GCP
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ env.GCP_HOST }}
+          username: ${{ env.GCP_USER }}
+          key: ${{ env.GCP_SSH_KEY }}
+          script: |
+            #— export GitHub Secrets into remote session
+            export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+            export DOCKERHUB_PASSWORD=${{ secrets.DOCKERHUB_PASSWORD }}
 
-        docker build \
-          --build-arg FRONTEND_URL=${{ env.FRONTEND_URL }} \
-          -t $DOCKERHUB_USERNAME/ai-codemate-socket:latest ./socket-server
-        docker push $DOCKERHUB_USERNAME/ai-codemate-socket:latest
+            #— Docker Hub login on remote
+            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
 
-    - name: Deploy to GCP
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ env.GCP_HOST }}
-        username: ${{ env.GCP_USER }}
-        key: ${{ env.GCP_SSH_KEY }}
-        script: |
-          docker pull $DOCKERHUB_USERNAME/ai-codemate-fe:latest
-          docker pull $DOCKERHUB_USERNAME/ai-codemate-be:latest
-          docker pull $DOCKERHUB_USERNAME/ai-codemate-socket:latest
-          if [ ! -d /home/fd_dongle/codemate ]; then
-            git clone https://github.com/in-kim/codemate-ai.git /home/fd_dongle/codemate-ai
-            cd /home/fd_dongle/codemate-ai
-            git checkout release
-          else
-            cd /home/fd_dongle/codemate-ai
-            git fetch origin release
-            git pull origin release
-          fi
-          docker compose down
-          docker compose up -d
+            #— mark the deploy repo safe for Git operations
+            git config --global --add safe.directory /home/fd_dongle/codemate-ai
+
+            #— clone or update code
+            DEPLOY_DIR=/home/fd_dongle/codemate-ai
+            if [ ! -d "$DEPLOY_DIR/.git" ]; then
+              rm -rf "$DEPLOY_DIR"
+              git clone --branch release https://github.com/in-kim/codemate-ai.git "$DEPLOY_DIR"
+            else
+              cd "$DEPLOY_DIR"
+              git fetch origin release
+              git reset --hard origin/release
+            fi
+
+            #— deploy
+            cd "$DEPLOY_DIR"
+            docker compose pull
+            docker compose down
+            docker compose up -d
