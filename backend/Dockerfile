@@ -39,4 +39,4 @@ ENV JWT_REFRESH_EXPIRES_IN=$JWT_REFRESH_EXPIRES_IN
 # 4000번 포트 노출
 EXPOSE 4000
 
-CMD ["pnpm", "start"]  
+CMD ["pnpm", "start:prod"]  

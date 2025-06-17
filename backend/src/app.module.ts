@@ -11,7 +11,7 @@ import { EventModule } from './shared/events/event.module';
 
 // 환경 변수 파일 경로 결정
 const envFilePath =
-  process.env.NODE_ENV === 'production' ? '.env.prod' : '.env.local';
+  process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local';
 console.log(`환경 변수 파일 로드 중: ${envFilePath}`);
 
 @Module({
