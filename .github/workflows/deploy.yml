@@ -76,9 +76,11 @@ jobs:
 
       - name: Clone or update code
         run: |
-          git config --global --add safe.directory /home/fd_dongle/codemate-ai
+          DEPLOY_DIR="/home/${{ env.GCP_USER }}/codemate-ai"
+          sudo mkdir -p "$DEPLOY_DIR"
+          sudo chown -R "${{ env.GCP_USER }}:${{ env.GCP_USER }}" "$DEPLOY_DIR"
+          git config --global --add safe.directory "$DEPLOY_DIR"
 
-          DEPLOY_DIR=/home/fd_dongle/codemate-ai
           if [ ! -d "$DEPLOY_DIR/.git" ]; then
             rm -rf "$DEPLOY_DIR"
             git clone --branch release https://github.com/in-kim/codemate-ai.git "$DEPLOY_DIR"
