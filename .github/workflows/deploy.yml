@@ -72,6 +72,46 @@ jobs:
             -t $DOCKERHUB_USERNAME/ai-codemate-socket:latest ./socket-server
           docker push $DOCKERHUB_USERNAME/ai-codemate-socket:latest
 
+      - name: Generate runtime FE env file
+        run: |
+          FE_DIR=/home/fd_dongle/codemate-ai/frontend
+          
+          cat <<EOF > $FE_DIR/.env.production
+          NODE_ENV=production
+          BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
+          NEXT_PUBLIC_GITHUB_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}
+          NEXT_PUBLIC_GITHUB_REDIRECT_URI=${{ secrets.GH_REDIRECT_URI }}
+          EOF
+
+      - name: Generate runtime BE env file
+        run: |
+          BE_DIR=/home/fd_dongle/codemate-ai/backend
+          
+          cat <<EOF > $BE_DIR/.env.production
+
+          NODE_ENV=production
+          MONGO_URI=${{ secrets.MONGO_URL }}
+          GOOGLE_APPLICATION_CREDENTIALS=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+          VERTEX_PROJECT_ID=${{ secrets.VERTEX_PROJECT_ID }}
+          GITHUB_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }}
+          GITHUB_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}
+          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          JWT_INVITE_SECRET=${{ secrets.JWT_INVITE_SECRET }}
+          JWT_INVITE_EXPIRES_IN=${{ secrets.JWT_INVITE_EXPIRES_IN }}
+          JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }}
+          JWT_REFRESH_EXPIRES_IN=${{ secrets.JWT_REFRESH_EXPIRES_IN }}
+          EOF
+
+      - name: Generate runtime socket-server env file
+        run: |
+          SOCKET_DIR=/home/fd_dongle/codemate-ai/socket-server
+          
+          cat <<EOF > $SOCKET_DIR/.env.production
+          NODE_ENV=production
+          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+          EOF
+
       - name: Deploy to GCP
         uses: appleboy/ssh-action@v1.0.0
         with:
