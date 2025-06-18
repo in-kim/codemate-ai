@@ -13,22 +13,24 @@ jobs:
     env:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-      GCP_SSH_KEY:      ${{ secrets.GCP_SSH_PRIVATE_KEY }}
-      GCP_USER:         ${{ secrets.GCP_USER }}
-      GCP_HOST:         ${{ secrets.GCP_HOST }}
-      BACKEND_API_URL:      ${{ secrets.BACKEND_API_URL }}
-      GITHUB_CLIENT_ID:     ${{ secrets.GH_CLIENT_ID }}
-      GITHUB_REDIRECT_URI:  ${{ secrets.GH_CLIENT_URI }}
-      MONGO_URI:            ${{ secrets.MONGO_URL }}
+      GCP_SSH_KEY: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
+      GCP_USER: ${{ secrets.GCP_USER }}
+      GCP_HOST: ${{ secrets.GCP_HOST }}
+      # frontend env
+      BACKEND_API_URL: ${{ secrets.BACKEND_API_URL }}
+      GITHUB_CLIENT_ID: ${{ secrets.GH_CLIENT_ID }}
+      GITHUB_REDIRECT_URI: ${{ secrets.GH_REDIRECT_URI }}
+      # backend & socket-server env
+      MONGO_URI: ${{ secrets.MONGO_URL }}
       GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-      VERTEX_PROJECT_ID:    ${{ secrets.VERTEX_PROJECT_ID }}
-      VERTEX_LOCATION:      ${{ secrets.VERTEX_LOCATION }}
+      VERTEX_PROJECT_ID: ${{ secrets.VERTEX_PROJECT_ID }}
+      VERTEX_LOCATION: ${{ secrets.VERTEX_LOCATION }}
       GITHUB_CLIENT_SECRET: ${{ secrets.GH_CLIENT_SECRET }}
-      FRONTEND_URL:         ${{ secrets.FRONTEND_URL }}
-      JWT_SECRET:           ${{ secrets.JWT_SECRET }}
-      JWT_INVITE_SECRET:    ${{ secrets.JWT_INVITE_SECRET }}
+      FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      JWT_INVITE_SECRET: ${{ secrets.JWT_INVITE_SECRET }}
       JWT_INVITE_EXPIRES_IN: ${{ secrets.JWT_INVITE_EXPIRES_IN }}
-      JWT_EXPIRES_IN:        ${{ secrets.JWT_EXPIRES_IN }}
+      JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
       JWT_REFRESH_EXPIRES_IN: ${{ secrets.JWT_REFRESH_EXPIRES_IN }}
 
     steps:
@@ -72,11 +74,33 @@ jobs:
             -t $DOCKERHUB_USERNAME/ai-codemate-socket:latest ./socket-server
           docker push $DOCKERHUB_USERNAME/ai-codemate-socket:latest
 
+      - name: Clone or update code
+        run: |
+          git config --global --add safe.directory /home/fd_dongle/codemate-ai
+
+          DEPLOY_DIR=/home/fd_dongle/codemate-ai
+          if [ ! -d "$DEPLOY_DIR/.git" ]; then
+            rm -rf "$DEPLOY_DIR"
+            git clone --branch release https://github.com/in-kim/codemate-ai.git "$DEPLOY_DIR"
+          else
+            cd "$DEPLOY_DIR"
+            git fetch origin release
+            git reset --hard origin/release
+          fi
+
       - name: Generate runtime FE env file
         run: |
           FE_DIR=/home/fd_dongle/codemate-ai/frontend
+          FILE=$FE_DIR/.env.production
+
+          if [ ! -f "$FILE" ]; then
+            echo "✖ $FILE not found, creating..."
+            touch "$FILE"
+          else
+            echo "✔ $FILE exists, overwriting..."
+          fi
           
-          cat <<EOF > $FE_DIR/.env.production
+          cat <<EOF > $FILE
           NODE_ENV=production
           BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
           NEXT_PUBLIC_GITHUB_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}
@@ -86,9 +110,16 @@ jobs:
       - name: Generate runtime BE env file
         run: |
           BE_DIR=/home/fd_dongle/codemate-ai/backend
-          
-          cat <<EOF > $BE_DIR/.env.production
+          FILE=$BE_DIR/.env.production
 
+          if [ ! -f "$FILE" ]; then
+            echo "✖ $FILE not found, creating..."
+            touch "$FILE"
+          else
+            echo "✔ $FILE exists, overwriting..."
+          fi
+
+          cat <<EOF > $FILE
           NODE_ENV=production
           MONGO_URI=${{ secrets.MONGO_URL }}
           GOOGLE_APPLICATION_CREDENTIALS=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
@@ -106,8 +137,16 @@ jobs:
       - name: Generate runtime socket-server env file
         run: |
           SOCKET_DIR=/home/fd_dongle/codemate-ai/socket-server
+          FILE=$SOCKET_DIR/.env.production
+
+          if [ ! -f "$FILE" ]; then
+            echo "✖ $FILE not found, creating..."
+            touch "$FILE"
+          else
+            echo "✔ $FILE exists, overwriting..."
+          fi
           
-          cat <<EOF > $SOCKET_DIR/.env.production
+          cat <<EOF > $FILE
           NODE_ENV=production
           FRONTEND_URL=${{ secrets.FRONTEND_URL }}
           EOF
@@ -119,40 +158,19 @@ jobs:
           username: ${{ env.GCP_USER }}
           key: ${{ env.GCP_SSH_KEY }}
           script: |
-            set -e
+            #— export GitHub Secrets into remote session
+            export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+            export DOCKERHUB_PASSWORD=${{ secrets.DOCKERHUB_PASSWORD }}
 
-            # — expose Docker Hub creds remotely
-            export DOCKERHUB_USERNAME="${{ secrets.DOCKERHUB_USERNAME }}"
-            export DOCKERHUB_PASSWORD="${{ secrets.DOCKERHUB_PASSWORD }}"
+            #— Docker Hub login on remote
+            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
 
-            # — ensure deploy dir exists and is owned
-            DEPLOY_DIR="/home/${{ env.GCP_USER }}/codemate-ai"
-            sudo mkdir -p "$DEPLOY_DIR"
-            sudo chown -R "${{ env.GCP_USER }}:${{ env.GCP_USER }}" "$DEPLOY_DIR"
-
-            # — allow git in that dir
-            git config --global --add safe.directory "$DEPLOY_DIR"
-
-            # — clone or update release branch
-            if [ ! -d "$DEPLOY_DIR/.git" ]; then
-              rm -rf "$DEPLOY_DIR"
-              git clone --branch release https://github.com/in-kim/codemate-ai.git "$DEPLOY_DIR"
-            else
-              cd "$DEPLOY_DIR"
-              sudo chown -R "${{ env.GCP_USER }}:${{ env.GCP_USER }}" .
-              git fetch origin release
-              git reset --hard origin/release
-            fi
-
+            #— deploy
             cd "$DEPLOY_DIR"
-
-            # — docker login & pull images (use sudo for socket access)
-            echo "$DOCKERHUB_PASSWORD" | sudo docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             sudo docker pull $DOCKERHUB_USERNAME/ai-codemate-fe:latest
             sudo docker pull $DOCKERHUB_USERNAME/ai-codemate-be:latest
             sudo docker pull $DOCKERHUB_USERNAME/ai-codemate-socket:latest
 
-            # — compose up with sudo to avoid socket permission errors
             sudo docker compose pull
             sudo docker compose down
             sudo docker compose up -d
