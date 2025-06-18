@@ -167,6 +167,10 @@ jobs:
 
             #— deploy
             cd "$DEPLOY_DIR"
-            docker compose pull
-            docker compose down
-            docker compose up -d
+            sudo docker pull $DOCKERHUB_USERNAME/ai-codemate-fe:latest
+            sudo docker pull $DOCKERHUB_USERNAME/ai-codemate-be:latest
+            sudo docker pull $DOCKERHUB_USERNAME/ai-codemate-socket:latest
+
+            sudo docker compose pull
+            sudo docker compose down
+            sudo docker compose up -d
