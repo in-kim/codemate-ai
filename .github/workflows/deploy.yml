@@ -71,7 +71,7 @@ jobs:
           docker push ${{ env.DOCKERHUB_USERNAME }}/ai-codemate-socket:latest
 
       - name: Copy Compose to GCP
-        uses: appleboy/scp-action@v0.1.0
+        uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ env.GCP_HOST }}
           username: ${{ env.GCP_USER }}
