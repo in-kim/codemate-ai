@@ -13,166 +13,127 @@ jobs:
     env:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-      GCP_SSH_KEY: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
-      GCP_USER: ${{ secrets.GCP_USER }}
-      GCP_HOST: ${{ secrets.GCP_HOST }}
-      # frontend env
-      BACKEND_API_URL: ${{ secrets.BACKEND_API_URL }}
-      GITHUB_CLIENT_ID: ${{ secrets.GH_CLIENT_ID }}
-      GITHUB_REDIRECT_URI: ${{ secrets.GH_REDIRECT_URI }}
-      # backend & socket-server env
-      MONGO_URI: ${{ secrets.MONGO_URL }}
+      GCP_SSH_KEY:       ${{ secrets.GCP_SSH_PRIVATE_KEY }}
+      GCP_USER:          ${{ secrets.GCP_USER }}
+      GCP_HOST:          ${{ secrets.GCP_HOST }}
+      # runtime env (all from GitHub Secrets)
+      BACKEND_API_URL:              ${{ secrets.BACKEND_API_URL }}
+      MONGO_URI:                    ${{ secrets.MONGO_URL }}
       GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-      VERTEX_PROJECT_ID: ${{ secrets.VERTEX_PROJECT_ID }}
-      VERTEX_LOCATION: ${{ secrets.VERTEX_LOCATION }}
-      GITHUB_CLIENT_SECRET: ${{ secrets.GH_CLIENT_SECRET }}
-      FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      JWT_INVITE_SECRET: ${{ secrets.JWT_INVITE_SECRET }}
-      JWT_INVITE_EXPIRES_IN: ${{ secrets.JWT_INVITE_EXPIRES_IN }}
-      JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
-      JWT_REFRESH_EXPIRES_IN: ${{ secrets.JWT_REFRESH_EXPIRES_IN }}
+      VERTEX_PROJECT_ID:            ${{ secrets.VERTEX_PROJECT_ID }}
+      VERTEX_LOCATION:              ${{ secrets.VERTEX_LOCATION }}
+      GITHUB_CLIENT_ID:             ${{ secrets.GH_CLIENT_ID }}
+      GITHUB_CLIENT_SECRET:         ${{ secrets.GH_CLIENT_SECRET }}
+      GITHUB_REDIRECT_URI:          ${{ secrets.GH_REDIRECT_URI }}
+      FRONTEND_URL:                 ${{ secrets.FRONTEND_URL }}
+      JWT_SECRET:                   ${{ secrets.JWT_SECRET }}
+      JWT_INVITE_SECRET:            ${{ secrets.JWT_INVITE_SECRET }}
+      JWT_INVITE_EXPIRES_IN:        ${{ secrets.JWT_INVITE_EXPIRES_IN }}
+      JWT_EXPIRES_IN:               ${{ secrets.JWT_EXPIRES_IN }}
+      JWT_REFRESH_EXPIRES_IN:       ${{ secrets.JWT_REFRESH_EXPIRES_IN }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
       - name: Log in to Docker Hub
         run: echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
 
-      - name: Build and Push frontend
+      - name: Build & Push images
         run: |
-          docker build \
-            --build-arg BACKEND_API_URL=${{ env.BACKEND_API_URL }} \
-            --build-arg GITHUB_CLIENT_ID=${{ env.GITHUB_CLIENT_ID }} \
-            --build-arg GITHUB_REDIRECT_URI=${{ env.GITHUB_REDIRECT_URI }} \
-            -t $DOCKERHUB_USERNAME/ai-codemate-fe:latest ./frontend
+          docker build --build-arg BACKEND_API_URL=${{ env.BACKEND_API_URL }} -t $DOCKERHUB_USERNAME/ai-codemate-fe:latest ./frontend
           docker push $DOCKERHUB_USERNAME/ai-codemate-fe:latest
 
-      - name: Build and Push backend
-        run: |
           docker build \
-            --build-arg MONGO_URI="${{ env.MONGO_URI }}" \
-            --build-arg GOOGLE_APPLICATION_CREDENTIALS="${{ env.GOOGLE_APPLICATION_CREDENTIALS }}" \
-            --build-arg VERTEX_PROJECT_ID="${{ env.VERTEX_PROJECT_ID }}" \
-            --build-arg VERTEX_LOCATION="${{ env.VERTEX_LOCATION }}" \
-            --build-arg GITHUB_CLIENT_SECRET="${{ env.GITHUB_CLIENT_SECRET }}" \
-            --build-arg GITHUB_CLIENT_ID="${{ env.GITHUB_CLIENT_ID }}" \
-            --build-arg FRONTEND_URL="${{ env.FRONTEND_URL }}" \
-            --build-arg JWT_SECRET="${{ env.JWT_SECRET }}" \
-            --build-arg JWT_INVITE_SECRET="${{ env.JWT_INVITE_SECRET }}" \
-            --build-arg JWT_INVITE_EXPIRES_IN="${{ env.JWT_INVITE_EXPIRES_IN }}" \
-            --build-arg JWT_EXPIRES_IN="${{ env.JWT_EXPIRES_IN }}" \
-            --build-arg JWT_REFRESH_EXPIRES_IN="${{ env.JWT_REFRESH_EXPIRES_IN }}" \
+            --build-arg MONGO_URI=${{ env.MONGO_URI }} \
+            --build-arg GOOGLE_APPLICATION_CREDENTIALS=${{ env.GOOGLE_APPLICATION_CREDENTIALS }} \
+            --build-arg VERTEX_PROJECT_ID=${{ env.VERTEX_PROJECT_ID }} \
+            --build-arg VERTEX_LOCATION=${{ env.VERTEX_LOCATION }} \
+            --build-arg GITHUB_CLIENT_ID=${{ env.GITHUB_CLIENT_ID }} \
+            --build-arg GITHUB_CLIENT_SECRET=${{ env.GITHUB_CLIENT_SECRET }} \
+            --build-arg FRONTEND_URL=${{ env.FRONTEND_URL }} \
+            --build-arg JWT_SECRET=${{ env.JWT_SECRET }} \
+            --build-arg JWT_INVITE_SECRET=${{ env.JWT_INVITE_SECRET }} \
+            --build-arg JWT_INVITE_EXPIRES_IN=${{ env.JWT_INVITE_EXPIRES_IN }} \
+            --build-arg JWT_EXPIRES_IN=${{ env.JWT_EXPIRES_IN }} \
+            --build-arg JWT_REFRESH_EXPIRES_IN=${{ env.JWT_REFRESH_EXPIRES_IN }} \
             -t $DOCKERHUB_USERNAME/ai-codemate-be:latest ./backend
           docker push $DOCKERHUB_USERNAME/ai-codemate-be:latest
 
-      - name: Build and Push socket-server
-        run: |
-          docker build \
-            --build-arg FRONTEND_URL=${{ env.FRONTEND_URL }} \
-            -t $DOCKERHUB_USERNAME/ai-codemate-socket:latest ./socket-server
+          docker build --build-arg FRONTEND_URL=${{ env.FRONTEND_URL }} -t $DOCKERHUB_USERNAME/ai-codemate-socket:latest ./socket-server
           docker push $DOCKERHUB_USERNAME/ai-codemate-socket:latest
 
-      - name: Clone or update code
+      - name: Generate runtime env files
         run: |
-          DEPLOY_DIR="/home/${{ env.GCP_USER }}/codemate-ai"
-          sudo mkdir -p "$DEPLOY_DIR"
-          sudo chown -R "${{ env.GCP_USER }}:${{ env.GCP_USER }}" "$DEPLOY_DIR"
-          git config --global --add safe.directory "$DEPLOY_DIR"
-
-          if [ ! -d "$DEPLOY_DIR/.git" ]; then
-            rm -rf "$DEPLOY_DIR"
-            git clone --branch release https://github.com/in-kim/codemate-ai.git "$DEPLOY_DIR"
-          else
-            cd "$DEPLOY_DIR"
-            git fetch origin release
-            git reset --hard origin/release
-          fi
-
-      - name: Generate runtime FE env file
-        run: |
-          FE_DIR=/home/fd_dongle/codemate-ai/frontend
-          FILE=$FE_DIR/.env.production
-
-          if [ ! -f "$FILE" ]; then
-            echo "✖ $FILE not found, creating..."
-            touch "$FILE"
-          else
-            echo "✔ $FILE exists, overwriting..."
-          fi
-          
-          cat <<EOF > $FILE
+          # frontend
+          mkdir -p frontend
+          cat <<EOF > frontend/.env.production
           NODE_ENV=production
-          BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
-          NEXT_PUBLIC_GITHUB_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}
-          NEXT_PUBLIC_GITHUB_REDIRECT_URI=${{ secrets.GH_REDIRECT_URI }}
+          BACKEND_API_URL=${{ env.BACKEND_API_URL }}
+          NEXT_PUBLIC_GITHUB_CLIENT_ID=${{ env.GITHUB_CLIENT_ID }}
+          NEXT_PUBLIC_GITHUB_REDIRECT_URI=${{ env.GITHUB_REDIRECT_URI }}
           EOF
 
-      - name: Generate runtime BE env file
-        run: |
-          BE_DIR=/home/fd_dongle/codemate-ai/backend
-          FILE=$BE_DIR/.env.production
-
-          if [ ! -f "$FILE" ]; then
-            echo "✖ $FILE not found, creating..."
-            touch "$FILE"
-          else
-            echo "✔ $FILE exists, overwriting..."
-          fi
-
-          cat <<EOF > $FILE
+          # backend
+          mkdir -p backend
+          cat <<EOF > backend/.env.production
           NODE_ENV=production
-          MONGO_URI=${{ secrets.MONGO_URL }}
-          GOOGLE_APPLICATION_CREDENTIALS=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-          VERTEX_PROJECT_ID=${{ secrets.VERTEX_PROJECT_ID }}
-          GITHUB_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }}
-          GITHUB_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}
-          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
-          JWT_SECRET=${{ secrets.JWT_SECRET }}
-          JWT_INVITE_SECRET=${{ secrets.JWT_INVITE_SECRET }}
-          JWT_INVITE_EXPIRES_IN=${{ secrets.JWT_INVITE_EXPIRES_IN }}
-          JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }}
-          JWT_REFRESH_EXPIRES_IN=${{ secrets.JWT_REFRESH_EXPIRES_IN }}
+          MONGO_URI=${{ env.MONGO_URI }}
+          GOOGLE_APPLICATION_CREDENTIALS=${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
+          VERTEX_PROJECT_ID=${{ env.VERTEX_PROJECT_ID }}
+          GITHUB_CLIENT_ID=${{ env.GITHUB_CLIENT_ID }}
+          GITHUB_CLIENT_SECRET=${{ env.GITHUB_CLIENT_SECRET }}
+          FRONTEND_URL=${{ env.FRONTEND_URL }}
+          JWT_SECRET=${{ env.JWT_SECRET }}
+          JWT_INVITE_SECRET=${{ env.JWT_INVITE_SECRET }}
+          JWT_INVITE_EXPIRES_IN=${{ env.JWT_INVITE_EXPIRES_IN }}
+          JWT_EXPIRES_IN=${{ env.JWT_EXPIRES_IN }}
+          JWT_REFRESH_EXPIRES_IN=${{ env.JWT_REFRESH_EXPIRES_IN }}
           EOF
 
-      - name: Generate runtime socket-server env file
-        run: |
-          SOCKET_DIR=/home/fd_dongle/codemate-ai/socket-server
-          FILE=$SOCKET_DIR/.env.production
-
-          if [ ! -f "$FILE" ]; then
-            echo "✖ $FILE not found, creating..."
-            touch "$FILE"
-          else
-            echo "✔ $FILE exists, overwriting..."
-          fi
-          
-          cat <<EOF > $FILE
+          # socket-server
+          mkdir -p socket-server
+          cat <<EOF > socket-server/.env.production
           NODE_ENV=production
-          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+          FRONTEND_URL=${{ env.FRONTEND_URL }}
           EOF
 
-      - name: Deploy to GCP
+      - name: Copy Compose & Env to GCP
+        uses: appleboy/scp-action@v0.1.0
+        with:
+          host: ${{ env.GCP_HOST }}
+          username: ${{ env.GCP_USER }}
+          key: ${{ env.GCP_SSH_KEY }}
+          source: |
+            docker-compose.yml
+            frontend/.env.production
+            backend/.env.production
+            socket-server/.env.production
+          target: /home/${{ env.GCP_USER }}/codemate-ai
+
+      - name: Deploy on GCP
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ env.GCP_HOST }}
           username: ${{ env.GCP_USER }}
           key: ${{ env.GCP_SSH_KEY }}
           script: |
-            #— export GitHub Secrets into remote session
-            export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
-            export DOCKERHUB_PASSWORD=${{ secrets.DOCKERHUB_PASSWORD }}
+            set -e
 
-            #— Docker Hub login on remote
-            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
+            DEPLOY_DIR="/home/$USER/codemate-ai"
 
-            #— deploy
+            # ensure ownership and permissions
+            sudo chown -R $USER:$USER "$DEPLOY_DIR"
+
             cd "$DEPLOY_DIR"
+
+            # pull latest images
+            echo "$DOCKERHUB_PASSWORD" | sudo docker login -u "$DOCKERHUB_USERNAME" --password-stdin
             sudo docker pull $DOCKERHUB_USERNAME/ai-codemate-fe:latest
             sudo docker pull $DOCKERHUB_USERNAME/ai-codemate-be:latest
             sudo docker pull $DOCKERHUB_USERNAME/ai-codemate-socket:latest
 
+            # restart compose
             sudo docker compose pull
             sudo docker compose down
             sudo docker compose up -d
