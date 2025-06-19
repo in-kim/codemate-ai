@@ -90,23 +90,21 @@ jobs:
 
             DEPLOY_DIR="/home/$USER/codemate-ai"
 
-            # 기존에 있을 수 있는 .env.production 파일은 삭제
             rm -f "$DEPLOY_DIR/frontend/.env.production"
             rm -f "$DEPLOY_DIR/backend/.env.production"
             rm -f "$DEPLOY_DIR/socket-server/.env.production"
+
+            mkdir -p "$DEPLOY_DIR"
 
             sudo chown -R $USER:$USER "$DEPLOY_DIR"
 
             cd "$DEPLOY_DIR"
 
-            # Docker Hub 로그인 (pull을 위해)
             echo "${{ env.DOCKERHUB_PASSWORD }}" | sudo docker login -u "${{ env.DOCKERHUB_USERNAME }}" --password-stdin
             sudo docker pull ${{ env.DOCKERHUB_USERNAME }}/ai-codemate-fe:latest
             sudo docker pull ${{ env.DOCKERHUB_USERNAME }}/ai-codemate-be:latest
             sudo docker pull ${{ env.DOCKERHUB_USERNAME }}/ai-codemate-socket:latest
 
-            # GitHub Actions 환경 변수들을 현재 셸 세션의 환경 변수로 export합니다.
-            # 이 export된 변수들은 'sudo docker compose up -d' 명령에서 참조될 수 있습니다.
             export BACKEND_API_URL="${{ env.BACKEND_API_URL }}"
             export MONGO_URI="${{ env.MONGO_URI }}"
             export VERTEX_PROJECT_ID="${{ env.VERTEX_PROJECT_ID }}"
@@ -121,6 +119,6 @@ jobs:
             export JWT_EXPIRES_IN="${{ env.JWT_EXPIRES_IN }}"
             export JWT_REFRESH_EXPIRES_IN="${{ env.JWT_REFRESH_EXPIRES_IN }}"
 
-            sudo docker compose pull # (선택 사항: 이미 위에서 pull 했으므로 불필요할 수 있음)
+            sudo docker compose pull
             sudo docker compose down
             sudo docker compose up -d
