@@ -101,11 +101,11 @@ jobs:
           host: ${{ env.GCP_HOST }}
           username: ${{ env.GCP_USER }}
           key: ${{ env.GCP_SSH_KEY }}
-          source:
-            - docker-compose.yml
-            - frontend/.env.production
-            - backend/.env.production
-            - socket-server/.env.production
+          source: > 
+            docker-compose.yml
+            frontend/.env.production
+            backend/.env.production
+            socket-server/.env.production
           target: /home/${{ env.GCP_USER }}/codemate-ai
 
       - name: Deploy on GCP
