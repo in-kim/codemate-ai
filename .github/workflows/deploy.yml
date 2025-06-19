@@ -10,167 +10,134 @@ jobs:
     if: github.ref == 'refs/heads/release'
     runs-on: ubuntu-latest
 
+    # GitHub Actions Secret을 워크플로우 전체의 환경 변수로 설정합니다.
+    # 이렇게 설정된 환경 변수들은 이후의 모든 'run' 스텝에서 사용 가능합니다.
     env:
+      # Docker Hub 인증 정보 (빌드 및 푸시, GCP 로그인 시 사용)
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-      GCP_SSH_KEY: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
-      GCP_USER: ${{ secrets.GCP_USER }}
-      GCP_HOST: ${{ secrets.GCP_HOST }}
-      # frontend env
-      BACKEND_API_URL: ${{ secrets.BACKEND_API_URL }}
-      GITHUB_CLIENT_ID: ${{ secrets.GH_CLIENT_ID }}
-      GITHUB_REDIRECT_URI: ${{ secrets.GH_REDIRECT_URI }}
-      # backend & socket-server env
-      MONGO_URI: ${{ secrets.MONGO_URL }}
+      
+      # GCP SSH 접속 정보 (SCP 및 SSH 액션에 사용)
+      GCP_SSH_KEY:       ${{ secrets.GCP_SSH_PRIVATE_KEY }}
+      GCP_USER:          ${{ secrets.GCP_USER }}
+      GCP_HOST:          ${{ secrets.GCP_HOST }}
+
+      # 애플리케이션 런타임 환경 변수 (Docker Compose로 컨테이너에 주입될 것들)
+      # 이 변수들은 SCP로 전송되지 않고, SSH 세션에서 직접 export됩니다.
+      BACKEND_API_URL:              ${{ secrets.BACKEND_API_URL }}
+      MONGO_URI:                    ${{ secrets.MONGO_URL }} # 원본에서 MONGO_URL 이었으므로 통일
       GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-      VERTEX_PROJECT_ID: ${{ secrets.VERTEX_PROJECT_ID }}
-      VERTEX_LOCATION: ${{ secrets.VERTEX_LOCATION }}
-      GITHUB_CLIENT_SECRET: ${{ secrets.GH_CLIENT_SECRET }}
-      FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      JWT_INVITE_SECRET: ${{ secrets.JWT_INVITE_SECRET }}
-      JWT_INVITE_EXPIRES_IN: ${{ secrets.JWT_INVITE_EXPIRES_IN }}
-      JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
-      JWT_REFRESH_EXPIRES_IN: ${{ secrets.JWT_REFRESH_EXPIRES_IN }}
+      VERTEX_PROJECT_ID:            ${{ secrets.VERTEX_PROJECT_ID }}
+      VERTEX_LOCATION:              ${{ secrets.VERTEX_LOCATION }}
+      GITHUB_CLIENT_ID:             ${{ secrets.GH_CLIENT_ID }}
+      GITHUB_CLIENT_SECRET:         ${{ secrets.GH_CLIENT_SECRET }}
+      GITHUB_REDIRECT_URI:          ${{ secrets.GH_REDIRECT_URI }}
+      FRONTEND_URL:                 ${{ secrets.FRONTEND_URL }}
+      JWT_SECRET:                   ${{ secrets.JWT_SECRET }}
+      JWT_INVITE_SECRET:            ${{ secrets.JWT_INVITE_SECRET }}
+      JWT_INVITE_EXPIRES_IN:        ${{ secrets.JWT_INVITE_EXPIRES_IN }}
+      JWT_EXPIRES_IN:               ${{ secrets.JWT_EXPIRES_IN }}
+      JWT_REFRESH_EXPIRES_IN:       ${{ secrets.JWT_REFRESH_EXPIRES_IN }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
       - name: Log in to Docker Hub
-        run: echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+        # env.DOCKERHUB_PASSWORD 대신 secrets.DOCKERHUB_PASSWORD를 직접 사용
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-      - name: Build and Push frontend
+      - name: Build & Push images
         run: |
+          # 빌드 시 민감 정보는 가급적 포함하지 않는 것이 좋지만,
+          # 불가피한 경우 --build-arg로 전달합니다. (권장하지는 않음)
+          # GOOGLE_APPLICATION_CREDENTIALS와 같은 JSON 파일 내용은
+          # 런타임에 볼륨 마운트하거나 VM 서비스 계정을 통해 인증하는 것이 안전합니다.
+          # 여기서는 편의상 이전처럼 빌드 시 파일로 생성하여 사용합니다.
+          echo "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}" > /tmp/gac_key.json
+          chmod 600 /tmp/gac_key.json
+
+          docker build --build-arg BACKEND_API_URL=${{ env.BACKEND_API_URL }} -t ${{ env.DOCKERHUB_USERNAME }}/ai-codemate-fe:latest ./frontend
+          docker push ${{ env.DOCKERHUB_USERNAME }}/ai-codemate-fe:latest
+
           docker build \
-            --build-arg BACKEND_API_URL=${{ env.BACKEND_API_URL }} \
+            --build-arg MONGO_URI=${{ env.MONGO_URI }} \
+            --build-arg VERTEX_PROJECT_ID=${{ env.VERTEX_PROJECT_ID }} \
+            --build-arg VERTEX_LOCATION=${{ env.VERTEX_LOCATION }} \
             --build-arg GITHUB_CLIENT_ID=${{ env.GITHUB_CLIENT_ID }} \
-            --build-arg GITHUB_REDIRECT_URI=${{ env.GITHUB_REDIRECT_URI }} \
-            -t $DOCKERHUB_USERNAME/ai-codemate-fe:latest ./frontend
-          docker push $DOCKERHUB_USERNAME/ai-codemate-fe:latest
-
-      - name: Build and Push backend
-        run: |
-          docker build \
-            --build-arg MONGO_URI="${{ env.MONGO_URI }}" \
-            --build-arg GOOGLE_APPLICATION_CREDENTIALS="${{ env.GOOGLE_APPLICATION_CREDENTIALS }}" \
-            --build-arg VERTEX_PROJECT_ID="${{ env.VERTEX_PROJECT_ID }}" \
-            --build-arg VERTEX_LOCATION="${{ env.VERTEX_LOCATION }}" \
-            --build-arg GITHUB_CLIENT_SECRET="${{ env.GITHUB_CLIENT_SECRET }}" \
-            --build-arg GITHUB_CLIENT_ID="${{ env.GITHUB_CLIENT_ID }}" \
-            --build-arg FRONTEND_URL="${{ env.FRONTEND_URL }}" \
-            --build-arg JWT_SECRET="${{ env.JWT_SECRET }}" \
-            --build-arg JWT_INVITE_SECRET="${{ env.JWT_INVITE_SECRET }}" \
-            --build-arg JWT_INVITE_EXPIRES_IN="${{ env.JWT_INVITE_EXPIRES_IN }}" \
-            --build-arg JWT_EXPIRES_IN="${{ env.JWT_EXPIRES_IN }}" \
-            --build-arg JWT_REFRESH_EXPIRES_IN="${{ env.JWT_REFRESH_EXPIRES_IN }}" \
-            -t $DOCKERHUB_USERNAME/ai-codemate-be:latest ./backend
-          docker push $DOCKERHUB_USERNAME/ai-codemate-be:latest
-
-      - name: Build and Push socket-server
-        run: |
-          docker build \
+            --build-arg GITHUB_CLIENT_SECRET=${{ env.GITHUB_CLIENT_SECRET }} \
             --build-arg FRONTEND_URL=${{ env.FRONTEND_URL }} \
-            -t $DOCKERHUB_USERNAME/ai-codemate-socket:latest ./socket-server
-          docker push $DOCKERHUB_USERNAME/ai-codemate-socket:latest
+            --build-arg JWT_SECRET=${{ env.JWT_SECRET }} \
+            --build-arg JWT_INVITE_SECRET=${{ env.JWT_INVITE_SECRET }} \
+            --build-arg JWT_INVITE_EXPIRES_IN=${{ env.JWT_INVITE_EXPIRES_IN }} \
+            --build-arg JWT_EXPIRES_IN=${{ env.JWT_EXPIRES_IN }} \
+            --build-arg JWT_REFRESH_EXPIRES_IN=${{ env.JWT_REFRESH_EXPIRES_IN }} \
+            -t ${{ env.DOCKERHUB_USERNAME }}/ai-codemate-be:latest ./backend
+          docker push ${{ env.DOCKERHUB_USERNAME }}/ai-codemate-be:latest
 
-      - name: Clone or update code
-        run: |
-          git config --global --add safe.directory /home/fd_dongle/codemate-ai
+          docker build --build-arg FRONTEND_URL=${{ env.FRONTEND_URL }} -t ${{ env.DOCKERHUB_USERNAME }}/ai-codemate-socket:latest ./socket-server
+          docker push ${{ env.DOCKERHUB_USERNAME }}/ai-codemate-socket:latest
 
-          DEPLOY_DIR=/home/fd_dongle/codemate-ai
-          if [ ! -d "$DEPLOY_DIR/.git" ]; then
-            rm -rf "$DEPLOY_DIR"
-            git clone --branch release https://github.com/in-kim/codemate-ai.git "$DEPLOY_DIR"
-          else
-            cd "$DEPLOY_DIR"
-            git fetch origin release
-            git reset --hard origin/release
-          fi
+      # .env.production 파일들을 더 이상 생성하거나 복사하지 않습니다.
+      - name: Copy Compose to GCP
+        uses: appleboy/scp-action@v0.1.0
+        with:
+          host: ${{ env.GCP_HOST }}
+          username: ${{ env.GCP_USER }}
+          key: ${{ env.GCP_SSH_KEY }}
+          source: docker-compose.yml # docker-compose.yml 파일만 복사
+          target: /home/${{ env.GCP_USER }}/codemate-ai
 
-      - name: Generate runtime FE env file
-        run: |
-          FE_DIR=/home/fd_dongle/codemate-ai/frontend
-          FILE=$FE_DIR/.env.production
-
-          if [ ! -f "$FILE" ]; then
-            echo "✖ $FILE not found, creating..."
-            touch "$FILE"
-          else
-            echo "✔ $FILE exists, overwriting..."
-          fi
-          
-          cat <<EOF > $FILE
-          NODE_ENV=production
-          BACKEND_API_URL=${{ secrets.BACKEND_API_URL }}
-          NEXT_PUBLIC_GITHUB_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}
-          NEXT_PUBLIC_GITHUB_REDIRECT_URI=${{ secrets.GH_REDIRECT_URI }}
-          EOF
-
-      - name: Generate runtime BE env file
-        run: |
-          BE_DIR=/home/fd_dongle/codemate-ai/backend
-          FILE=$BE_DIR/.env.production
-
-          if [ ! -f "$FILE" ]; then
-            echo "✖ $FILE not found, creating..."
-            touch "$FILE"
-          else
-            echo "✔ $FILE exists, overwriting..."
-          fi
-
-          cat <<EOF > $FILE
-          NODE_ENV=production
-          MONGO_URI=${{ secrets.MONGO_URL }}
-          GOOGLE_APPLICATION_CREDENTIALS=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-          VERTEX_PROJECT_ID=${{ secrets.VERTEX_PROJECT_ID }}
-          GITHUB_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }}
-          GITHUB_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}
-          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
-          JWT_SECRET=${{ secrets.JWT_SECRET }}
-          JWT_INVITE_SECRET=${{ secrets.JWT_INVITE_SECRET }}
-          JWT_INVITE_EXPIRES_IN=${{ secrets.JWT_INVITE_EXPIRES_IN }}
-          JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }}
-          JWT_REFRESH_EXPIRES_IN=${{ secrets.JWT_REFRESH_EXPIRES_IN }}
-          EOF
-
-      - name: Generate runtime socket-server env file
-        run: |
-          SOCKET_DIR=/home/fd_dongle/codemate-ai/socket-server
-          FILE=$SOCKET_DIR/.env.production
-
-          if [ ! -f "$FILE" ]; then
-            echo "✖ $FILE not found, creating..."
-            touch "$FILE"
-          else
-            echo "✔ $FILE exists, overwriting..."
-          fi
-          
-          cat <<EOF > $FILE
-          NODE_ENV=production
-          FRONTEND_URL=${{ secrets.FRONTEND_URL }}
-          EOF
-
-      - name: Deploy to GCP
+      - name: Deploy on GCP
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ env.GCP_HOST }}
           username: ${{ env.GCP_USER }}
           key: ${{ env.GCP_SSH_KEY }}
           script: |
-            #— export GitHub Secrets into remote session
-            export DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
-            export DOCKERHUB_PASSWORD=${{ secrets.DOCKERHUB_PASSWORD }}
+            set -e
 
-            #— Docker Hub login on remote
-            echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
+            DEPLOY_DIR="/home/$USER/codemate-ai"
 
-            #— deploy
+            # 기존에 있을 수 있는 .env.production 파일은 삭제
+            rm -f "$DEPLOY_DIR/frontend/.env.production"
+            rm -f "$DEPLOY_DIR/backend/.env.production"
+            rm -f "$DEPLOY_DIR/socket-server/.env.production"
+
+            sudo chown -R $USER:$USER "$DEPLOY_DIR"
+
             cd "$DEPLOY_DIR"
-            sudo docker pull $DOCKERHUB_USERNAME/ai-codemate-fe:latest
-            sudo docker pull $DOCKERHUB_USERNAME/ai-codemate-be:latest
-            sudo docker pull $DOCKERHUB_USERNAME/ai-codemate-socket:latest
 
-            sudo docker compose pull
+            # Docker Hub 로그인 (pull을 위해)
+            echo "${{ env.DOCKERHUB_PASSWORD }}" | sudo docker login -u "${{ env.DOCKERHUB_USERNAME }}" --password-stdin
+            sudo docker pull ${{ env.DOCKERHUB_USERNAME }}/ai-codemate-fe:latest
+            sudo docker pull ${{ env.DOCKERHUB_USERNAME }}/ai-codemate-be:latest
+            sudo docker pull ${{ env.DOCKERHUB_USERNAME }}/ai-codemate-socket:latest
+
+            # GitHub Actions 환경 변수들을 현재 셸 세션의 환경 변수로 export합니다.
+            # 이 export된 변수들은 'sudo docker compose up -d' 명령에서 참조될 수 있습니다.
+            export BACKEND_API_URL="${{ env.BACKEND_API_URL }}"
+            export MONGO_URI="${{ env.MONGO_URI }}"
+            # GOOGLE_APPLICATION_CREDENTIALS 파일 처리:
+            # 1. GCP VM에 서비스 계정을 연결하고 앱이 이를 활용하도록 함 (가장 권장)
+            # 2. GitHub Actions에서 GAC JSON 내용을 SSH로 VM에 전송하여 파일로 저장 후, 해당 경로 export
+            #    예: echo "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}" | ssh -i /path/to/ssh_key user@host "cat > /tmp/gac_key.json && chmod 600 /tmp/gac_key.json"
+            #    export GOOGLE_APPLICATION_CREDENTIALS="/tmp/gac_key.json"
+            export VERTEX_PROJECT_ID="${{ env.VERTEX_PROJECT_ID }}"
+            export VERTEX_LOCATION="${{ env.VERTEX_LOCATION }}"
+            export GITHUB_CLIENT_ID="${{ env.GITHUB_CLIENT_ID }}"
+            export GITHUB_CLIENT_SECRET="${{ env.GITHUB_CLIENT_SECRET }}"
+            export GITHUB_REDIRECT_URI="${{ env.GITHUB_REDIRECT_URI }}"
+            export FRONTEND_URL="${{ env.FRONTEND_URL }}"
+            export JWT_SECRET="${{ env.JWT_SECRET }}"
+            export JWT_INVITE_SECRET="${{ env.JWT_INVITE_SECRET }}"
+            export JWT_INVITE_EXPIRES_IN="${{ env.JWT_INVITE_EXPIRES_IN }}"
+            export JWT_EXPIRES_IN="${{ env.JWT_EXPIRES_IN }}"
+            export JWT_REFRESH_EXPIRES_IN="${{ env.JWT_REFRESH_EXPIRES_IN }}"
+
+            # Docker Compose 실행
+            # docker-compose.yml 파일에서 "${VARIABLE_NAME}" 형태로 참조된 변수들이
+            # 위에서 export된 값들로 대체됩니다.
+            sudo docker compose pull # (선택 사항: 이미 위에서 pull 했으므로 불필요할 수 있음)
             sudo docker compose down
             sudo docker compose up -d
