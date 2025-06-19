@@ -10,22 +10,15 @@ jobs:
     if: github.ref == 'refs/heads/release'
     runs-on: ubuntu-latest
 
-    # GitHub Actions Secret을 워크플로우 전체의 환경 변수로 설정합니다.
-    # 이렇게 설정된 환경 변수들은 이후의 모든 'run' 스텝에서 사용 가능합니다.
     env:
-      # Docker Hub 인증 정보 (빌드 및 푸시, GCP 로그인 시 사용)
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
       
-      # GCP SSH 접속 정보 (SCP 및 SSH 액션에 사용)
       GCP_SSH_KEY:       ${{ secrets.GCP_SSH_PRIVATE_KEY }}
       GCP_USER:          ${{ secrets.GCP_USER }}
       GCP_HOST:          ${{ secrets.GCP_HOST }}
-
-      # 애플리케이션 런타임 환경 변수 (Docker Compose로 컨테이너에 주입될 것들)
-      # 이 변수들은 SCP로 전송되지 않고, SSH 세션에서 직접 export됩니다.
       BACKEND_API_URL:              ${{ secrets.BACKEND_API_URL }}
-      MONGO_URI:                    ${{ secrets.MONGO_URL }} # 원본에서 MONGO_URL 이었으므로 통일
+      MONGO_URI:                    ${{ secrets.MONGO_URL }}
       GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
       VERTEX_PROJECT_ID:            ${{ secrets.VERTEX_PROJECT_ID }}
       VERTEX_LOCATION:              ${{ secrets.VERTEX_LOCATION }}
@@ -44,7 +37,6 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Log in to Docker Hub
-        # env.DOCKERHUB_PASSWORD 대신 secrets.DOCKERHUB_PASSWORD를 직접 사용
         run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
       - name: Build & Push images
@@ -78,14 +70,13 @@ jobs:
           docker build --build-arg FRONTEND_URL=${{ env.FRONTEND_URL }} -t ${{ env.DOCKERHUB_USERNAME }}/ai-codemate-socket:latest ./socket-server
           docker push ${{ env.DOCKERHUB_USERNAME }}/ai-codemate-socket:latest
 
-      # .env.production 파일들을 더 이상 생성하거나 복사하지 않습니다.
       - name: Copy Compose to GCP
         uses: appleboy/scp-action@v0.1.0
         with:
-          host: ${{ env.GCP_HOST }}
-          username: ${{ env.GCP_USER }}
-          key: ${{ env.GCP_SSH_KEY }}
-          source: docker-compose.yml # docker-compose.yml 파일만 복사
+          host: ${{ secrets.GCP_HOST }}
+          username: ${{ secrets.GCP_USER }}
+          key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
+          source: docker-compose.yml
           target: /home/${{ env.GCP_USER }}/codemate-ai
 
       - name: Deploy on GCP
@@ -118,11 +109,6 @@ jobs:
             # 이 export된 변수들은 'sudo docker compose up -d' 명령에서 참조될 수 있습니다.
             export BACKEND_API_URL="${{ env.BACKEND_API_URL }}"
             export MONGO_URI="${{ env.MONGO_URI }}"
-            # GOOGLE_APPLICATION_CREDENTIALS 파일 처리:
-            # 1. GCP VM에 서비스 계정을 연결하고 앱이 이를 활용하도록 함 (가장 권장)
-            # 2. GitHub Actions에서 GAC JSON 내용을 SSH로 VM에 전송하여 파일로 저장 후, 해당 경로 export
-            #    예: echo "${{ env.GOOGLE_APPLICATION_CREDENTIALS }}" | ssh -i /path/to/ssh_key user@host "cat > /tmp/gac_key.json && chmod 600 /tmp/gac_key.json"
-            #    export GOOGLE_APPLICATION_CREDENTIALS="/tmp/gac_key.json"
             export VERTEX_PROJECT_ID="${{ env.VERTEX_PROJECT_ID }}"
             export VERTEX_LOCATION="${{ env.VERTEX_LOCATION }}"
             export GITHUB_CLIENT_ID="${{ env.GITHUB_CLIENT_ID }}"
@@ -135,9 +121,6 @@ jobs:
             export JWT_EXPIRES_IN="${{ env.JWT_EXPIRES_IN }}"
             export JWT_REFRESH_EXPIRES_IN="${{ env.JWT_REFRESH_EXPIRES_IN }}"
 
-            # Docker Compose 실행
-            # docker-compose.yml 파일에서 "${VARIABLE_NAME}" 형태로 참조된 변수들이
-            # 위에서 export된 값들로 대체됩니다.
             sudo docker compose pull # (선택 사항: 이미 위에서 pull 했으므로 불필요할 수 있음)
             sudo docker compose down
             sudo docker compose up -d
