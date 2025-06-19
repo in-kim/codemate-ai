@@ -65,7 +65,6 @@ jobs:
 
       - name: Generate runtime env files
         run: |
-          # frontend
           mkdir -p frontend
           cat <<EOF > frontend/.env.production
           NODE_ENV=production
@@ -74,7 +73,6 @@ jobs:
           NEXT_PUBLIC_GITHUB_REDIRECT_URI=${{ env.GITHUB_REDIRECT_URI }}
           EOF
 
-          # backend
           mkdir -p backend
           cat <<EOF > backend/.env.production
           NODE_ENV=production
@@ -91,7 +89,6 @@ jobs:
           JWT_REFRESH_EXPIRES_IN=${{ env.JWT_REFRESH_EXPIRES_IN }}
           EOF
 
-          # socket-server
           mkdir -p socket-server
           cat <<EOF > socket-server/.env.production
           NODE_ENV=production
@@ -104,11 +101,11 @@ jobs:
           host: ${{ env.GCP_HOST }}
           username: ${{ env.GCP_USER }}
           key: ${{ env.GCP_SSH_KEY }}
-          source: |
-            docker-compose.yml
-            frontend/.env.production
-            backend/.env.production
-            socket-server/.env.production
+          source:
+            - docker-compose.yml
+            - frontend/.env.production
+            - backend/.env.production
+            - socket-server/.env.production
           target: /home/${{ env.GCP_USER }}/codemate-ai
 
       - name: Deploy on GCP
@@ -122,7 +119,6 @@ jobs:
 
             DEPLOY_DIR="/home/$USER/codemate-ai"
 
-            # ensure ownership and permissions
             sudo chown -R $USER:$USER "$DEPLOY_DIR"
 
             cd "$DEPLOY_DIR"
