@@ -73,9 +73,9 @@ jobs:
       - name: Copy Compose to GCP
         uses: appleboy/scp-action@v0.1.0
         with:
-          host: ${{ secrets.GCP_HOST }}
-          username: ${{ secrets.GCP_USER }}
-          key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
+          host: ${{ env.GCP_HOST }}
+          username: ${{ env.GCP_USER }}
+          key: ${{ env.GCP_SSH_KEY }}
           source: docker-compose.yml
           target: /home/${{ env.GCP_USER }}/codemate-ai
 
