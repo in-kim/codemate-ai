@@ -13,6 +13,21 @@ services:
     build: dinni1214/ai-codemate-be
     ports:
       - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=${MONGO_URI}
+      - GOOGLE_APPLICATION_CREDENTIALS=/
+      - VERTEX_PROJECT_ID=${VERTEX_PROJECT_ID}
+      - VERTEX_LOCATION=${VERTEX_LOCATION}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - GITHUB_REDIRECT_URI=${GITHUB_REDIRECT_URI}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_INVITE_SECRET=${JWT_INVITE_SECRET}
+      - JWT_INVITE_EXPIRES_IN=${JWT_INVITE_EXPIRES_IN}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN}
     depends_on:
       - mongo
     networks:
@@ -22,6 +37,11 @@ services:
     build: dinni1214/ai-codemate-fe
     ports:
       - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - BACKEND_API_URL=${BACKEND_API_URL}
+      - NEXT_PUBLIC_GITHUB_CLIENT_ID=${NEXT_PUBLIC_GITHUB_CLIENT_ID}
+      - NEXT_PUBLIC_GITHUB_REDIRECT_URI=${NEXT_PUBLIC_GITHUB_REDIRECT_URI}
     depends_on:
       - backend
     networks:
@@ -31,6 +51,9 @@ services:
     build: dinni1214/ai-codemate-socket
     ports:
       - "4001:4001"
+    environment:
+      - NODE_ENV=production
+      - FRONTEND_URL=${FRONTEND_URL}
     depends_on:
       - backend
     networks:
