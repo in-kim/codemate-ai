@@ -80,7 +80,7 @@ jobs:
 
       # .env.production 파일들을 더 이상 생성하거나 복사하지 않습니다.
       - name: Copy Compose to GCP
-        uses: appleboy/scp-action@v0.1.0
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ env.GCP_HOST }}
           username: ${{ env.GCP_USER }}
@@ -89,7 +89,7 @@ jobs:
           target: /home/${{ env.GCP_USER }}/codemate-ai
 
       - name: Deploy on GCP
-        uses: appleboy/ssh-action@v1.0.0
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ env.GCP_HOST }}
           username: ${{ env.GCP_USER }}
