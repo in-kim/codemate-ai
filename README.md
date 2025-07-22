@@ -1,4 +1,4 @@
-# [CodeMate.AI 🧠](https://aicodemate.net)
+# [CodeMate.AI 🧠]
 
 > LLM 기반 실시간 코드 리뷰 및 협업이 가능한 웹 IDE
 
