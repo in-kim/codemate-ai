@@ -41,7 +41,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Log in to Docker Hub
         # env.DOCKERHUB_PASSWORD 대신 secrets.DOCKERHUB_PASSWORD를 직접 사용
@@ -80,7 +80,7 @@ jobs:
 
       # .env.production 파일들을 더 이상 생성하거나 복사하지 않습니다.
       - name: Copy Compose to GCP
-        uses: appleboy/scp-action@v0.1.0
+        uses: appleboy/scp-action@v1.0.0
         with:
           host: ${{ env.GCP_HOST }}
           username: ${{ env.GCP_USER }}
